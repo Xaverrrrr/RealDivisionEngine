@@ -24,7 +24,6 @@ public:
 	void setRenderDistance(int x);
 	int getRenderDistance();
 
-
 private:
 
 	string name;

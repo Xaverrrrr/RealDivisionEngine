@@ -16,13 +16,16 @@ void Entity::updatePosition() {
 }
 
 void Entity::setVelocity(vector<double> vel) {
-	this->velocity = vel;
+	this->velocity[0] = vel[0];
+	this->velocity[1] = vel[1];
+	this->velocity[2] = vel[2];
 }
 
 vector<double> Entity::getVelocity()
 {
 	return this->velocity;
 }
+
 
 vector<double> Entity::getPosition() 
 {

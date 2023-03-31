@@ -44,8 +44,8 @@ vector<double> Camera::getRotation() {
 vector<vector<int>> Camera::renderScreen(vector<Entity*> entities) {
 
 	vector<vector<int>> output;
-	vector<double> myRotation = this->rotation;
-	vector<double> myPosition = this->position;
+	vector<double> myRotation = this->getRotation();
+	vector<double> myPosition = this->getPosition();
 
 
 		for (Entity* var : entities) {
@@ -53,11 +53,11 @@ vector<vector<int>> Camera::renderScreen(vector<Entity*> entities) {
 			double deltaY = (var->getPosition()[1] - myPosition[1]);
 			double deltaZ = (var->getPosition()[2] - myPosition[2]);
 
-			double vectorLen = sqrt(pow(sqrt(pow(deltaX, 2) + pow(deltaY, 2)), 2) + pow(deltaZ, 2));
+			double vectorLen = sqrt(pow(deltaX, 2) + pow(deltaY, 2));
 
 			if (vectorLen <= this->renderDistance) {
-				double angleXY = MathFuns::roundToDigit(MathFuns::radToDeg(atan2(deltaY, deltaX)), 2);
-				double angleXZ = MathFuns::roundToDigit(MathFuns::radToDeg(atan2(deltaZ, deltaX)), 2);
+				double angleXY = MathFuns::radToDeg(atan2(deltaY, deltaX));
+				double angleXZ = MathFuns::radToDeg(atan2(deltaZ, deltaX));
 
 				double adjustedAngelXY = angleXY - myRotation[0];
 				double adjustedAngelXZ = angleXZ - myRotation[1];
@@ -66,11 +66,10 @@ vector<vector<int>> Camera::renderScreen(vector<Entity*> entities) {
 					output.push_back(
 						{ 
 							(int)round(MathFuns::map(adjustedAngelXY, -this->FovXY, this->FovXY, 0, 980)), 
-							(int)round((vectorLen / this->renderDistance) * 300) 
+							(int)round((1- (vectorLen / this->renderDistance)) * var->getDimensions()[2])
 						});
 				}
 			}
 		}
 		return output;
 }
-

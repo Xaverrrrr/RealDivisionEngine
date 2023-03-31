@@ -22,8 +22,8 @@ class Entity
 		void			setName(string name);
 		string			getName();
 		
-		void setDimensions(vector<double> dimensions);
-		vector<double> getDimensions();
+		void			setDimensions(vector<double> dimensions);
+		vector<double>	getDimensions();
 		
 
 	private:
