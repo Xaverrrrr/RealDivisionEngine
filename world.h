@@ -12,6 +12,7 @@ class World
 {
 	public:
 		World(string name);
+		vector<int> getWindowMeasurements();
 		void addEntity(Entity* entity);
 		vector<Entity*> getEntities();
 		void deleteEtity(Entity* entity);
@@ -21,6 +22,7 @@ class World
 
 	private:
 		string name;
+		vector<int> windowMeasurements = { 980, 540 };
 		vector<double> measurements = { 0.0, 0.0, 0.0 };
 		vector<Entity*> entityList;
 		//vecor<Wall> wallList;

@@ -2,12 +2,14 @@
 #include "window.h"
 #include "iostream"
 
+#include "mathFuns.h"
 #include "entity.h"
 #include "camera.h"
 #include "world.h"
 
 
 #define MAX_LOADSTRING 100
+
 HINSTANCE hInst;        
 WCHAR szTitle[MAX_LOADSTRING];              
 WCHAR szWindowClass[MAX_LOADSTRING];   
@@ -19,13 +21,20 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 Camera* player = new Camera("PlayerCam1");
 World* world1 = new World("World1");
 Entity* test = new Entity("test");
+Entity* test1 = new Entity("test1");
 
 void initEntities() {
+
     player->setPosition({ 0, 0, 0 });
     player->setRenderDistance(50);
-    player->setFOV(60);
-    test->setPosition({ 5, 0, 0 });
+    player->setFovXY(60);
+
+    test->setPosition({ 5, 5, 0 });
+    test1->setPosition({ 5, -5, 0 });
+
     world1->addEntity(test);
+    world1->addEntity(test1);
+  
 }
 
 void CreateConsole()
@@ -66,6 +75,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_WINDOWSPROJECT1, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
+
     CreateConsole();
     initEntities();
 
@@ -82,7 +92,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-            player->renderScreen(world1->getEntities());
+            Sleep(10);
+            InvalidateRect(msg.hwnd, NULL, TRUE);
         }
     }
 
@@ -114,15 +125,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance;
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
+   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+   
    if (!hWnd)
    {
       return FALSE;
    }
 
+   MoveWindow(hWnd, 500, 500, world1->getWindowMeasurements()[0], world1->getWindowMeasurements()[1], TRUE);
    ShowWindow(hWnd, nCmdShow);
+   SetWindowTextA(hWnd, "Boom");
+   SetMenu(hWnd, NULL);
    UpdateWindow(hWnd);
 
    return TRUE;
@@ -152,43 +165,72 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             HDC hdc = BeginPaint(hWnd, &ps);
 
                 HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-
                     SelectObject(hdc, hPen);
-                    MoveToEx(hdc, 0, 0, 0);
-                    LineTo(hdc, 100, 100);
-                    LineTo(hdc, 100, 0);
-                    LineTo(hdc, 200, 100);
-                    
+
+                    for (vector<int> v : player->renderScreen(world1->getEntities()))
+                    {
+                        cout << v[0] << endl;
+                        MoveToEx(hdc, v[0], 100, 0);
+                        LineTo(hdc, v[0], v[1]);
+                    }
+
                 DeleteObject(hPen);
+
 
             EndPaint(hWnd, &ps);
         }
         break;
+
     case WM_KEYDOWN:
             if (GetAsyncKeyState((int)'W') & 0x8000)
             {
-                player->updatePosition(1.0, 0.0, 0.0);
+                player->setVelocity({ 0.1, 0.0, 0.0 });
             }
             if (GetAsyncKeyState((int)'A') & 0x8000)
             {
-                player->updatePosition(0.0, -1.0, 0.0);
+                player->setVelocity({ 0.0, -0.1, 0.0 });
             }
             if (GetAsyncKeyState((int)'S') & 0x8000)
             {
-                player->updatePosition(-1.0, 0.0, 0.0);
+                player->setVelocity({ -0.1, 0.0, 0.0 });
             }
             if (GetAsyncKeyState((int)'D') & 0x8000)
             {
-                player->updatePosition(0.0, 1.0, 0.0);
+                player->setVelocity({ 0.0, 0.1, 0.0 });
             }
-            std::cout << player->getPosition()[0] << player->getPosition()[1] << player->getPosition()[2] << std::endl;
+            player->updatePosition();
         break;
+
+    case WM_KEYUP:
+        if (GetAsyncKeyState((int)'W') & 0x8000)
+        {
+            player->setVelocity({ 0.0, 0.0, 0.0 });
+        }
+        if (GetAsyncKeyState((int)'A') & 0x8000)
+        {
+            player->setVelocity({ 0.0, 0.0, 0.0 });
+        }
+        if (GetAsyncKeyState((int)'S') & 0x8000)
+        {
+            player->setVelocity({ 0.0, 0.0, 0.0 });
+        }
+        if (GetAsyncKeyState((int)'D') & 0x8000)
+        {
+            player->setVelocity({ 0.0, 0.0, 0.0 });
+        }
+        player->updatePosition();
+        break;
+
+
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+
     default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
         UpdateWindow(hWnd);
+        return DefWindowProc(hWnd, message, wParam, lParam);
     }
+
     return 0;
 }

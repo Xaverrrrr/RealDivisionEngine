@@ -142,6 +142,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="mathFuns.h" />
     <ClInclude Include="world.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -150,6 +151,7 @@
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="entity.cpp" />
+    <ClCompile Include="mathFuns.cpp" />
     <ClCompile Include="window.cpp" />
     <ClCompile Include="world.cpp" />
   </ItemGroup>

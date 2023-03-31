@@ -14,6 +14,10 @@ vector<Entity*> World::getEntities() {
 	return this->entityList;
 }
 
+vector<int> World::getWindowMeasurements() {
+	return this->windowMeasurements;
+}
+
 void World::deleteEtity(Entity* entity)
 {
 	//todo
