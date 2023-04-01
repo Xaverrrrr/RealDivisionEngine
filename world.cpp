@@ -14,8 +14,22 @@ vector<Entity*> World::getEntities() {
 	return this->entityList;
 }
 
-
 void World::deleteEtity(Entity* entity)
+{
+	//todo
+}
+
+void World::addWall(Wall* wall)
+{
+	this->wallList.push_back(wall);
+}
+
+vector<Wall*> World::getWalls()
+{
+	return this->wallList;
+}
+
+void World::deleteWall(Wall* wall)
 {
 	//todo
 }

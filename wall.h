@@ -8,10 +8,13 @@ class Wall : public Entity
 
 		Wall(string name);
 
+		void setCoordinates(vector<vector<double>> cords);
+		vector<vector<double>> getCoordinates();
+
 	private:
 
 		string name;
 
-		vector<vector<double>> coordinates = { {0.0, 0.0}, {0.0, 0.0} }; //starting point and end point of wall
+		vector<vector<double>> coordinates = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} }; //starting point and end point of wall
 };
 #endif // !WALL_H

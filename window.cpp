@@ -9,7 +9,9 @@
 #include "world.h"
 
 
-#define MAX_LOADSTRING 100
+#define MAX_LOADSTRING 1000
+
+bool CursorIsVisible = true;
 
 HINSTANCE hInst;        
 WCHAR szTitle[MAX_LOADSTRING];              
@@ -23,7 +25,11 @@ Camera* player = new Camera("PlayerCam1");
 World* world1 = new World("World1");
 Entity* test = new Entity("test");
 Entity* test1 = new Entity("test1");
+
 Wall* wall = new Wall("wall");
+Wall* wall1 = new Wall("wall1");
+Wall* wall2 = new Wall("wall2");
+Wall* wall3 = new Wall("wall3");
 
 void initEntities() {
 
@@ -31,14 +37,22 @@ void initEntities() {
     player->setRenderDistance(50);
     player->setFovXY(60);
 
+    wall->setCoordinates({ {10, 0, 0}, {10, -10, 0} });
+    wall->setDimensions({ 0.0, 0.0, 540 });
 
-    test->setPosition({ 5, 5, 0 });
-    test->setDimensions({ 50, 50, 100 });
-    test1->setPosition({ 5, -5, 0 });
-    test1->setDimensions({ 100, 100, 200 });
+    wall1->setCoordinates({ {10, -10, 0}, {20, -10, 0} });
+    wall1->setDimensions({ 0.0, 0.0, 540 });
 
-    world1->addEntity(test);
-    world1->addEntity(test1);
+    wall2->setCoordinates({ {20, -10, 0}, {20, 0, 0} });
+    wall2->setDimensions({ 0.0, 0.0, 540 });
+
+    wall3->setCoordinates({ {20, 0, 0}, {10, 0, 0} });
+    wall3->setDimensions({ 0.0, 0.0, 540 });
+
+    world1->addWall(wall);
+    world1->addWall(wall1);
+    world1->addWall(wall2);
+    world1->addWall(wall3);
   
 }
 
@@ -72,6 +86,39 @@ void CreateConsole()
     std::wcin.clear();
 }
 
+void toggleCursor(LPARAM lParam, HWND hWnd) {
+    RECT rect;
+    GetClientRect(hWnd, &rect);
+
+    POINT ul;
+    ul.x = rect.left;
+    ul.y = rect.top;
+
+    POINT lr;
+    lr.x = rect.right;
+    lr.y = rect.bottom;
+
+    MapWindowPoints(hWnd, nullptr, &ul, 1);
+    MapWindowPoints(hWnd, nullptr, &lr, 1);
+
+    rect.left = ul.x;
+    rect.top = ul.y;
+
+    rect.right = lr.x;
+    rect.bottom = lr.y;
+
+    if (CursorIsVisible) {
+        ShowCursor(false);
+        ClipCursor(&rect);
+        CursorIsVisible = false;
+    }
+    else {
+        ShowCursor(true);
+        ClipCursor(NULL);
+        CursorIsVisible = true;
+    }
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
@@ -81,7 +128,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     LoadStringW(hInstance, IDC_WINDOWSPROJECT1, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
-    CreateConsole();
+    //CreateConsole();
     initEntities();
 
     if (!InitInstance (hInstance, nCmdShow))
@@ -91,16 +138,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT1));
     MSG msg;
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+
+    bool running = true;
+
+    while (running) {
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-            player->updatePosition();
-            Sleep(1);
-            InvalidateRect(msg.hwnd, NULL, TRUE);
         }
+
+        /*********************** 
+        *RENDERING HAPPENS HERE* 
+        ************************/
+
+        player->updatePosition();               //Add velocity onto position
+        Sleep(1);                               //Delay to make animations smoother
+        InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear screen
     }
 
     return (int) msg.wParam;
@@ -118,7 +172,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
     wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_WINDOWSPROJECT1));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hCursor        = NULL;
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_WINDOWSPROJECT1);
     wcex.lpszClassName  = szWindowClass;
@@ -133,17 +187,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   MoveWindow(hWnd, 500, 500, 980, 540, TRUE);
-   ShowWindow(hWnd, nCmdShow);
-   SetWindowTextA(hWnd, "Boom");
+   MoveWindow(hWnd, 100, 100, 980, 540 + 40, TRUE); //+40 for title bar
+   SetWindowText(hWnd, "Boom");
    SetMenu(hWnd, NULL);
-   UpdateWindow(hWnd);
+   ShowWindow(hWnd, nCmdShow);
 
+   if (!hWnd) return FALSE;
    return TRUE;
 }
 
@@ -160,7 +209,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         DestroyWindow(hWnd);
                         break;
                     default:
-                        return DefWindowProc(hWnd, message, wParam, lParam);
+                        return DefWindowProcW(hWnd, message, wParam, lParam);
                 }
             }
         break;
@@ -173,10 +222,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
                         SelectObject(hdc, hPen);
 
-                        for (vector<int> v : player->renderScreen(world1->getEntities()))
+                        /*Draw Crosshair*/
+
+                        MoveToEx(hdc, (980 - 20) / 2, (540 - 20) / 2, 0); 
+                        LineTo(hdc, (980 - 20) / 2 + 10, (540 - 20) / 2);
+                        MoveToEx(hdc, (980 - 20) / 2, (540 - 20) / 2, 0);
+                        LineTo(hdc, (980 - 20) / 2 - 10, (540 - 20) / 2);
+                        MoveToEx(hdc, (980 - 20) / 2, (540 - 20) / 2, 0);
+                        LineTo(hdc, (980 - 20) / 2, (540 - 20) / 2 + 10);
+                        MoveToEx(hdc, (980 - 20) / 2, (540 - 20) / 2, 0);
+                        LineTo(hdc, (980 - 20) / 2, (540 - 20) / 2 - 10);
+
+
+
+                        for (vector<int> v : player->renderEntities(world1->getEntities())) //For every entity in the list of entities
                         {
-                            MoveToEx(hdc, v[0], 300, 0);
-                            LineTo(hdc, v[0], 300 - v[1]);
+                            MoveToEx(hdc, v[0], 540, 0);
+                            LineTo(hdc, v[0], 540 - v[1]);
+                        }
+
+                        for (vector<vector<int>> v : player->renderWalls(world1->getWalls())) //For every wall in the list of walls
+                        {
+                            MoveToEx(hdc, v[0][0], 500, 0);
+                            LineTo(hdc, v[0][0], 500 - v[0][1]);
+
+                            MoveToEx(hdc, v[0][0], 500, 0);
+                            LineTo(hdc, v[1][0], 500);
+
+                            MoveToEx(hdc, v[1][0], 500, 0);
+                            LineTo(hdc, v[1][0], 500 - v[1][1]);
+
+                            MoveToEx(hdc, v[0][0], 500 - v[0][1], 0);
+                            LineTo(hdc, v[1][0], 500 - v[1][1]);
                         }
 
                     DeleteObject(hPen);
@@ -203,7 +280,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                     player->setVelocity({ 0.0, 0.05, 0.0 });
                 }
-                PostMessage(hWnd, WM_KEYUP, wParam, lParam);
+                if (GetAsyncKeyState(VK_ESCAPE) < 0)
+                {
+                    toggleCursor(lParam, hWnd);
+                }
         break;
 
         case WM_KEYUP:
@@ -223,16 +303,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                     player->setVelocity({ 0.0, 0.0, 0.0 });
                 }
-                PostMessage(hWnd, WM_KEYDOWN, wParam, lParam);
         break;
 
+        case WM_SETFOCUS:
+            toggleCursor(lParam, hWnd);
+            break;
+
+        case WM_MOUSEMOVE:
+            int mouseX;
+            int mouseY;
+            
+            break;
         case WM_DESTROY:
             PostQuitMessage(0);
         break;
 
         default:
             UpdateWindow(hWnd);
-            return DefWindowProc(hWnd, message, wParam, lParam);
+            return DefWindowProcW(hWnd, message, wParam, lParam);
     }
 
     return 0;

@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "entity.h"
+#include "wall.h"
 #include "mathFuns.h"
 
 
@@ -19,7 +20,8 @@ public:
 	vector<double> getRotation();
 	void updateRotation(double xy, double xz);
 
-	vector<vector<int>> renderScreen(vector<Entity*> entities);
+	vector<vector<int>> renderEntities(vector<Entity*> entities);
+	vector<vector<vector<int>>> renderWalls(vector<Wall*> walls); //Returns a list of pairs (left and right side of wall) which themselfes contain a pair of both the x coordinate on the screen and the height of the line 
 
 	void setRenderDistance(int x);
 	int getRenderDistance();
