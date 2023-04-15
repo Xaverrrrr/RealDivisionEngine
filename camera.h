@@ -7,6 +7,7 @@
 #include "entity.h"
 #include "wall.h"
 #include "mathFuns.h"
+#include "vector3.h"
 
 
 class Camera: public Entity {
@@ -16,9 +17,9 @@ public:
 	void setFovXY(int fov);
 	int getFovXY();
 
-	void setRotation(vector<double> rotation);
-	vector<double> getRotation();
-	void updateRotation(double xy, double xz);
+	void setRotation(Vector3 rotation);
+	Vector3 getRotation();
+	void updateRotation(double x, double y, double z);
 
 	vector<vector<int>> renderEntities(vector<Entity*> entities);
 	vector<vector<vector<int>>> renderWalls(vector<Wall*> walls); //Returns a list of pairs (left and right side of wall) which themselfes contain a pair of both the x coordinate on the screen and the height of the line 
@@ -35,7 +36,7 @@ private:
 
 	int renderDistance;
 
-	vector<double> rotation = { 0.0, 0.0, 0.0 }; //Richtungsvektor
+	Vector3 rotation = { 0.0, 0.0, 0.0 }; //Richtungsvektor
 };
 
 #endif //CAMERA_H

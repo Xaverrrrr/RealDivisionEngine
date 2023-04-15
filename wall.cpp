@@ -5,22 +5,22 @@ Wall::Wall(string name)
 	this->name = name;
 }
 
-void Wall::setCoordinates(vector<vector<double>> cords)
+void Wall::setCoordinates(Vector3 start, Vector3 end)
 {
-	this->coordinates = cords;
+	this->coordinates = { start, end };
 }
 
-vector<vector<double>> Wall::getCoordinates()
+vector<Vector3> Wall::getCoordinates()
 {
 	return this->coordinates;
 }
 
-void Wall::setDimensions(vector<double> dimensions)
+void Wall::setDimensions(Vector3 dimensions)
 {
 	this->dimensions = dimensions;
 }
 
-vector<double> Wall::getDimensions()
+Vector3 Wall::getDimensions()
 {
 	return this->dimensions;
 }

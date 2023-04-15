@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include "vector3.h"
 
 using namespace std;
 
@@ -12,28 +13,28 @@ class Entity
 
 		Entity(string name);
 
-		void			setPosition(vector<double> myPosition);
-		vector<double>	getPosition();
+		void			setPosition(Vector3 myPosition);
+		Vector3			getPosition();
 		void			updatePosition();
 
-		void			setVelocity(vector<double> vel);
-		vector<double>	getVelocity();
+		void			setVelocity(Vector3 vel);
+		Vector3			getVelocity();
 
 		void			setName(string name);
 		string			getName();
 		
-		void			setDimensions(vector<double> dimensions);
-		vector<double>	getDimensions();
+		void			setDimensions(Vector3 dimensions);
+		Vector3			getDimensions();
 		
 
 	private:
 
 		string name;
 
-		vector<double> position		= { 0.0, 0.0, 0.0 }; //X,Y,Z
+		Vector3 position;	//X,Y,Z
 
-		vector<double> velocity		= { 0.0, 0.0, 0.0 }; //velX, velY, velZ
+		Vector3 velocity;	//velX, velY, velZ
 
-		vector<double> dimensions	= { 0.0, 0.0, 0.0 }; //length, width, height
+		Vector3 dimensions; //length, width, height
 };
 #endif //!ENTITY_H

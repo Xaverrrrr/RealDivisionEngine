@@ -10,6 +10,7 @@
 #include "camera.h"
 #include "wall.h"
 #include "world.h"
+#include "vector3.h"
 
 
 #define MAX_LOADSTRING 1000
@@ -38,21 +39,21 @@ Wall* wall3 = new Wall("wall3");
 
 void initEntities() {
 
-    player->setPosition({ 0, 0, 0 });
-    player->setRenderDistance(100);
+    player->setPosition({ -10, 0, 0 });
+    player->setRenderDistance(500);
     player->setFovXY(40);
 
-    wall->setCoordinates({ {0, 0, 0}, {0, 10, 0} });
-    wall->setDimensions({ 10, 0.0, 20 });
+    wall->setCoordinates(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 10.0, 0.0));
+    wall->setDimensions(Vector3(10, 0.0, 20 ));
 
-    wall1->setCoordinates({ {0, 10, 0}, {10, 10, 0} });
-    wall1->setDimensions({ 0.0, 0.0, 20 });
+    wall1->setCoordinates(Vector3(0, 10, 0), Vector3(10, 10, 0));
+    wall1->setDimensions(Vector3( 0.0, 0.0, 20 ));
 
-    wall2->setCoordinates({ {10, 10, 0}, {10, 0, 0} });
-    wall2->setDimensions({ 0.0, 0.0, 20 });
+    wall2->setCoordinates(Vector3(10, 10, 0), Vector3(10, 0, 0));
+    wall2->setDimensions(Vector3( 0.0, 0.0, 20 ));
 
-    wall3->setCoordinates({ {10, 0, 0}, {0, 0, 0} });
-    wall3->setDimensions({ 0.0, 0.0, 20 });
+    wall3->setCoordinates(Vector3(10, 0, 0), Vector3(0, 0, 0));
+    wall3->setDimensions(Vector3( 0.0, 0.0, 20 ));
 
     world1->addWall(wall);
     world1->addWall(wall1);
@@ -166,6 +167,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
+
         /***********************
         *RENDERING HAPPENS HERE*
         ************************/
@@ -237,6 +239,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 PAINTSTRUCT ps;
                 HDC hdc = BeginPaint(hWnd, &ps);
+
                     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
                     SelectObject(hdc, hPen);
 
@@ -297,20 +300,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (GetAsyncKeyState((int)'D') < 0)
                 {
                     player->setVelocity({ 0.0, 0.5, 0.0 });
-                }
-
-                if (GetAsyncKeyState(VK_UP) < 0) {
-                    player->updateRotation(0.0, -0.50);
-                }
-                if (GetAsyncKeyState(VK_DOWN) < 0) {
-                    player->updateRotation(0.0, 0.50);
-                }
-
-                if (GetAsyncKeyState(VK_RIGHT) < 0) {
-                    player->updateRotation(0.50, 0);
-                }
-                if (GetAsyncKeyState(VK_LEFT) < 0) {
-                    player->updateRotation(-0.5, 0.0);
                 }
 
                 if (GetAsyncKeyState(VK_ESCAPE) < 0)

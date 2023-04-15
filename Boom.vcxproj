@@ -101,6 +101,7 @@
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="mathFuns.cpp" />
+    <ClCompile Include="vector3.cpp" />
     <ClCompile Include="wall.cpp" />
     <ClCompile Include="window.cpp" />
     <ClCompile Include="world.cpp" />
@@ -112,6 +113,7 @@
     <ClInclude Include="mathFuns.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="vector3.h" />
     <ClInclude Include="wall.h" />
     <ClInclude Include="window.h" />
     <ClInclude Include="world.h" />

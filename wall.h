@@ -1,6 +1,7 @@
 #ifndef WALL_H
 	#define WALL_H
 	#include "entity.h"
+	#include "vector3.h"
 
 class Wall
 {
@@ -8,16 +9,16 @@ class Wall
 
 		Wall(string name);
 
-		void setCoordinates(vector<vector<double>> cords);
-		vector<vector<double>> getCoordinates();
-		void setDimensions(vector<double> x);
-		vector<double> getDimensions();
+		void						setCoordinates(Vector3 start, Vector3 end);
+		vector<Vector3>				getCoordinates();
+		void						setDimensions(Vector3 x);
+		Vector3						getDimensions();
 
 	private:
 
 		string name;
 
-		vector<vector<double>> coordinates = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} }; //starting point and end point of wall
-		vector<double> dimensions = { 0.0, 0.0, 0.0 };
+		vector<Vector3> coordinates; //starting point and end point of wall
+		Vector3 dimensions;
 };
 #endif // !WALL_H

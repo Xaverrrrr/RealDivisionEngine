@@ -28,30 +28,31 @@ int Camera::getFovXY()
 	return this->FovXY;
 }
 
-void Camera::setRotation(vector<double> rotation) {
+void Camera::setRotation(Vector3 rotation) {
 	this->rotation = rotation;
 }
 
-void Camera::updateRotation(double xy, double xz) {
-	this->rotation[0] += xy;
-	this->rotation[1] += xz;
+void Camera::updateRotation(double x, double y, double z) {
+	this->rotation.x += x;
+	this->rotation.y += y;
+	this->rotation.z += z;
 }
 
-vector<double> Camera::getRotation() {
+Vector3 Camera::getRotation() {
 	return this->rotation;
 }
 
 vector<vector<int>> Camera::renderEntities(vector<Entity*> entities) {
 
 	vector<vector<int>> output;
-	vector<double> myRotation = this->getRotation();
-	vector<double> myPosition = this->getPosition();
+	Vector3 myRotation = this->getRotation();
+	Vector3 myPosition = this->getPosition();
 
 
 		for (Entity* var : entities) {
-			double deltaX = (var->getPosition()[0] - myPosition[0]);
-			double deltaY = (var->getPosition()[1] - myPosition[1]);
-			double deltaZ = (var->getPosition()[2] - myPosition[2]);
+			double deltaX = (var->getPosition().x - myPosition.x);
+			double deltaY = (var->getPosition().y - myPosition.y);
+			double deltaZ = (var->getPosition().z - myPosition.z);
 
 			double vectorLen = sqrt(pow(deltaX, 2) + pow(deltaY, 2));
 
@@ -59,8 +60,8 @@ vector<vector<int>> Camera::renderEntities(vector<Entity*> entities) {
 				double angleXY = MathFuns::radToDeg(atan2(deltaY, deltaX));
 				double angleXZ = MathFuns::radToDeg(atan2(deltaZ, deltaX));
 
-				double adjustedAngleXY = angleXY - myRotation[0];
-				double adjustedAngleXZ = angleXZ - myRotation[1];
+				double adjustedAngleXY = angleXY - myRotation.x;
+				double adjustedAngleXZ = angleXZ - myRotation.y;
 
 				if (adjustedAngleXY <= this->FovXY && adjustedAngleXY >= -this->FovXY && adjustedAngleXZ <= this->FovXZ && adjustedAngleXZ >= -this->FovXZ) {
 					output.push_back(
@@ -77,28 +78,28 @@ vector<vector<int>> Camera::renderEntities(vector<Entity*> entities) {
 vector<vector<vector<int>>> Camera::renderWalls(vector<Wall*> walls) {
 
 	vector<vector<vector<int>>> output;
-	vector<double> myRotation = this->getRotation();
-	vector<double> myPosition = this->getPosition();
+	Vector3 myRotation = this->getRotation();
+	Vector3 myPosition = this->getPosition();
 
 
 	for (Wall* var : walls) {
-		double deltaX1 = (var->getCoordinates()[0][0] - myPosition[0]);
-		double deltaY1 = (var->getCoordinates()[0][1] - myPosition[1]);
+		double deltaX1 = (var->getCoordinates()[0].x - myPosition.x);
+		double deltaY1 = (var->getCoordinates()[0].y - myPosition.y);
 
 
 
-		double deltaX2 = (var->getCoordinates()[1][0] - myPosition[0]);
-		double deltaY2 = (var->getCoordinates()[1][1] - myPosition[1]);
+		double deltaX2 = (var->getCoordinates()[1].x - myPosition.x);
+		double deltaY2 = (var->getCoordinates()[1].y - myPosition.y);
 
 
 		double vectorLen1 = sqrt(pow(deltaX1, 2) + pow(deltaY1, 2));
 		double vectorLen2 = sqrt(pow(deltaX2, 2) + pow(deltaY2, 2));
 
-		double deltaZ1 = (var->getCoordinates()[0][2] + ((1 - (vectorLen1 / this->renderDistance / 2)) * (var->getDimensions()[2])) - myPosition[2]);
-		double deltaZ2 = (var->getCoordinates()[1][2] + ((1 - (vectorLen2 / this->renderDistance / 2)) * (var->getDimensions()[2])) - myPosition[2]);
+		double deltaZ1 = (var->getCoordinates()[0].z + ((1 - (vectorLen1 / this->renderDistance / 5)) * (var->getDimensions().z)) - myPosition.z);
+		double deltaZ2 = (var->getCoordinates()[1].z + ((1 - (vectorLen2 / this->renderDistance / 5)) * (var->getDimensions().z)) - myPosition.z);
 
-		double deltaZ1u = (var->getCoordinates()[0][2] - ((1 - (vectorLen1 / this->renderDistance / 2)) * (var->getDimensions()[2])) - myPosition[2]);
-		double deltaZ2u = (var->getCoordinates()[1][2] - ((1 - (vectorLen2 / this->renderDistance / 2)) * (var->getDimensions()[2])) - myPosition[2]);
+		double deltaZ1u = (var->getCoordinates()[0].z - ((1 - (vectorLen1 / this->renderDistance / 5)) * (var->getDimensions().z)) - myPosition.z);
+		double deltaZ2u = (var->getCoordinates()[1].z - ((1 - (vectorLen2 / this->renderDistance / 5)) * (var->getDimensions().z)) - myPosition.z);
 
 		if (vectorLen1 <= this->renderDistance || vectorLen2 <= this->renderDistance) {
 
@@ -109,30 +110,30 @@ vector<vector<vector<int>>> Camera::renderWalls(vector<Wall*> walls) {
 			double angleXZ2 = MathFuns::radToDeg(atan2(deltaZ2, deltaX2));
 			double angleXZ2u = MathFuns::radToDeg(atan2(deltaZ2u, deltaX2));
 
-			double adjustedAngleXY1 = (angleXY1 - myRotation[0]);
-			double adjustedAngleXZ1 = angleXZ1 - myRotation[1];
-			double adjustedAngleXZ1u = angleXZ1u - myRotation[1];
-			double adjustedAngleXY2 = (angleXY2 - myRotation[0]);
-			double adjustedAngleXZ2 = angleXZ2 - myRotation[1];
-			double adjustedAngleXZ2u = angleXZ2u - myRotation[1];
+			double adjustedAngleXY1 = angleXY1 - myRotation.x;
+			double adjustedAngleXZ1 = angleXZ1 - myRotation.y;
+			double adjustedAngleXZ1u = angleXZ1u - myRotation.y;
+			double adjustedAngleXY2 = angleXY2 - myRotation.x;
+			double adjustedAngleXZ2 = angleXZ2 - myRotation.y;
+			double adjustedAngleXZ2u = angleXZ2u - myRotation.y;
 
-			double adjustedDeltaY1 = deltaY1 - myRotation[0];
-			double adjustedDeltaY2 = deltaY2 - myRotation[0];
+			double adjustedDeltaY1 = deltaY1 - myRotation.x;
+			double adjustedDeltaY2 = deltaY2 - myRotation.x;
 
 
 			output.push_back(
 			{
 				{
 
-					(int)round(MathFuns::map(adjustedAngleXY1, -this->FovXY, this->FovXY, 0, 960)),				//X-Position on Screen
-					(int)round(MathFuns::mapLinear(adjustedAngleXZ1, -this->FovXZ, this->FovXZ, 0, 540)),		//Upper Y Position
-					(int)round(MathFuns::mapLinear(adjustedAngleXZ1u, -this->FovXZ, this->FovXZ, 0, 540))		//Lower Y Position
+					(int)round(MathFuns::map(adjustedAngleXY1, -this->FovXY, this->FovXY, -50, 960 + 50)),				//X-Position on Screen
+					(int)round(MathFuns::mapLinear(adjustedAngleXZ1, -this->FovXZ, this->FovXZ, -50, 540 + 50)),		//Upper Y Position
+					(int)round(MathFuns::mapLinear(adjustedAngleXZ1u, -this->FovXZ, this->FovXZ, -50, 540 + 50))		//Lower Y Position
 				},
 				{
 
-					(int)round(MathFuns::map(adjustedAngleXY2, -this->FovXY, this->FovXY, 0, 960)),
-					(int)round(MathFuns::mapLinear(adjustedAngleXZ2, -this->FovXZ, this->FovXZ, 0, 540)),
-					(int)round(MathFuns::mapLinear(adjustedAngleXZ2u, -this->FovXZ, this->FovXZ, 0, 540))
+					(int)round(MathFuns::map(adjustedAngleXY2, -this->FovXY, this->FovXY, -50, 960 + 50)),
+					(int)round(MathFuns::mapLinear(adjustedAngleXZ2, -this->FovXZ, this->FovXZ, -50, 540 + 50)),
+					(int)round(MathFuns::mapLinear(adjustedAngleXZ2u, -this->FovXZ, this->FovXZ, -50, 540 + 50))
 				}
 
 			});
