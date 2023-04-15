@@ -1,6 +1,6 @@
 #include "wall.h"
 
-Wall::Wall(string name) : Entity(name)
+Wall::Wall(string name)
 {
 	this->name = name;
 }
@@ -15,3 +15,12 @@ vector<vector<double>> Wall::getCoordinates()
 	return this->coordinates;
 }
 
+void Wall::setDimensions(vector<double> dimensions)
+{
+	this->dimensions = dimensions;
+}
+
+vector<double> Wall::getDimensions()
+{
+	return this->dimensions;
+}

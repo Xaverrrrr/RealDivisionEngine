@@ -16,7 +16,7 @@ vector<Entity*> World::getEntities() {
 
 void World::deleteEtity(Entity* entity)
 {
-	//todo
+	this->entityList.erase(std::remove(this->entityList.begin(), this->entityList.end(), entity), this->entityList.end());
 }
 
 void World::addWall(Wall* wall)
@@ -31,7 +31,7 @@ vector<Wall*> World::getWalls()
 
 void World::deleteWall(Wall* wall)
 {
-	//todo
+	this->wallList.erase(std::remove(this->wallList.begin(), this->wallList.end(), wall), this->wallList.end());
 }
 
 void World::setMeasurements(vector<double> measurements)
@@ -43,3 +43,4 @@ vector<double> World::getMeasurements()
 {
 	return this->measurements;
 }
+

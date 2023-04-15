@@ -35,9 +35,7 @@ private:
 
 	int renderDistance;
 
-
-	vector<double> position = { 0.0, 0.0, 0.0 };
-	vector<double> rotation = { 0.0, 0.0 }; //XY und XZ
+	vector<double> rotation = { 0.0, 0.0, 0.0 }; //Richtungsvektor
 };
 
 #endif //CAMERA_H

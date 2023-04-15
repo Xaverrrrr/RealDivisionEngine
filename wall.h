@@ -2,7 +2,7 @@
 	#define WALL_H
 	#include "entity.h"
 
-class Wall : public Entity
+class Wall
 {
 	public:
 
@@ -10,11 +10,14 @@ class Wall : public Entity
 
 		void setCoordinates(vector<vector<double>> cords);
 		vector<vector<double>> getCoordinates();
+		void setDimensions(vector<double> x);
+		vector<double> getDimensions();
 
 	private:
 
 		string name;
 
 		vector<vector<double>> coordinates = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} }; //starting point and end point of wall
+		vector<double> dimensions = { 0.0, 0.0, 0.0 };
 };
 #endif // !WALL_H

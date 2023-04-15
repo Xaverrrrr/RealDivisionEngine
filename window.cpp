@@ -1,6 +1,9 @@
 #include "framework.h"
 #include "window.h"
 #include "iostream"
+#include "thread"
+#include "future"
+
 
 #include "mathFuns.h"
 #include "entity.h"
@@ -12,6 +15,8 @@
 #define MAX_LOADSTRING 1000
 
 bool CursorIsVisible = true;
+vector<vector<int>> entityList = { {0, 0, 0} };
+vector<vector<vector<int>>> wallList = { { {0, 0, 0}, {0, 0, 0} } };
 
 HINSTANCE hInst;        
 WCHAR szTitle[MAX_LOADSTRING];              
@@ -34,26 +39,36 @@ Wall* wall3 = new Wall("wall3");
 void initEntities() {
 
     player->setPosition({ 0, 0, 0 });
-    player->setRenderDistance(50);
-    player->setFovXY(60);
+    player->setRenderDistance(100);
+    player->setFovXY(40);
 
-    wall->setCoordinates({ {10, 0, 0}, {10, -10, 0} });
-    wall->setDimensions({ 0.0, 0.0, 540 });
+    wall->setCoordinates({ {0, 0, 0}, {0, 10, 0} });
+    wall->setDimensions({ 10, 0.0, 20 });
 
-    wall1->setCoordinates({ {10, -10, 0}, {20, -10, 0} });
-    wall1->setDimensions({ 0.0, 0.0, 540 });
+    wall1->setCoordinates({ {0, 10, 0}, {10, 10, 0} });
+    wall1->setDimensions({ 0.0, 0.0, 20 });
 
-    wall2->setCoordinates({ {20, -10, 0}, {20, 0, 0} });
-    wall2->setDimensions({ 0.0, 0.0, 540 });
+    wall2->setCoordinates({ {10, 10, 0}, {10, 0, 0} });
+    wall2->setDimensions({ 0.0, 0.0, 20 });
 
-    wall3->setCoordinates({ {20, 0, 0}, {10, 0, 0} });
-    wall3->setDimensions({ 0.0, 0.0, 540 });
+    wall3->setCoordinates({ {10, 0, 0}, {0, 0, 0} });
+    wall3->setDimensions({ 0.0, 0.0, 20 });
 
     world1->addWall(wall);
     world1->addWall(wall1);
     world1->addWall(wall2);
     world1->addWall(wall3);
-  
+}
+
+void freeEntities() {
+    free(player);
+    free(wall);
+    free(wall1);
+    free(wall2);
+    free(wall3);
+    free(test);
+    free(test1);
+    free(world1);
 }
 
 void CreateConsole()
@@ -84,6 +99,11 @@ void CreateConsole()
     std::wclog.clear();
     std::wcerr.clear();
     std::wcin.clear();
+}
+
+void renderScreen() {
+    entityList = player->renderEntities(world1->getEntities());
+    wallList = player->renderWalls(world1->getWalls());
 }
 
 void toggleCursor(LPARAM lParam, HWND hWnd) {
@@ -124,11 +144,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_WINDOWSPROJECT1, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
-    //CreateConsole();
+    CreateConsole();
     initEntities();
 
     if (!InitInstance (hInstance, nCmdShow))
@@ -147,14 +166,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-
-        /*********************** 
-        *RENDERING HAPPENS HERE* 
+        /***********************
+        *RENDERING HAPPENS HERE*
         ************************/
+        Sleep(1);                               //Delay makes animation smoother
+        InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear 
 
         player->updatePosition();               //Add velocity onto position
-        Sleep(1);                               //Delay to make animations smoother
-        InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear screen
+
+        std::thread t1(renderScreen);
+        t1.join();
     }
 
     return (int) msg.wParam;
@@ -183,11 +204,9 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   hInst = hInstance;
-
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    
-   MoveWindow(hWnd, 100, 100, 980, 540 + 40, TRUE); //+40 for title bar
+   MoveWindow(hWnd, 100, 100, 960, 540 + 40, TRUE); //+40 for title bar
    SetWindowText(hWnd, "Boom");
    SetMenu(hWnd, NULL);
    ShowWindow(hWnd, nCmdShow);
@@ -218,42 +237,41 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 PAINTSTRUCT ps;
                 HDC hdc = BeginPaint(hWnd, &ps);
-
                     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-                        SelectObject(hdc, hPen);
+                    SelectObject(hdc, hPen);
 
                         /*Draw Crosshair*/
 
-                        MoveToEx(hdc, (980 - 20) / 2, (540 - 20) / 2, 0); 
-                        LineTo(hdc, (980 - 20) / 2 + 10, (540 - 20) / 2);
-                        MoveToEx(hdc, (980 - 20) / 2, (540 - 20) / 2, 0);
-                        LineTo(hdc, (980 - 20) / 2 - 10, (540 - 20) / 2);
-                        MoveToEx(hdc, (980 - 20) / 2, (540 - 20) / 2, 0);
-                        LineTo(hdc, (980 - 20) / 2, (540 - 20) / 2 + 10);
-                        MoveToEx(hdc, (980 - 20) / 2, (540 - 20) / 2, 0);
-                        LineTo(hdc, (980 - 20) / 2, (540 - 20) / 2 - 10);
+                        MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0); 
+                        LineTo(hdc, (960 - 20) / 2 + 10, (540 - 20) / 2);
+                        MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
+                        LineTo(hdc, (960 - 20) / 2 - 10, (540 - 20) / 2);
+                        MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
+                        LineTo(hdc, (960 - 20) / 2, (540 - 20) / 2 + 10);
+                        MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
+                        LineTo(hdc, (960 - 20) / 2, (540 - 20) / 2 - 10);
 
 
 
-                        for (vector<int> v : player->renderEntities(world1->getEntities())) //For every entity in the list of entities
+                        for (vector<int> v : entityList) //For every entity in the list of entities
                         {
-                            MoveToEx(hdc, v[0], 540, 0);
-                            LineTo(hdc, v[0], 540 - v[1]);
+                            MoveToEx(hdc, v[0], 520, 0);
+                            LineTo(hdc, v[0], 520 - v[1]);
                         }
 
-                        for (vector<vector<int>> v : player->renderWalls(world1->getWalls())) //For every wall in the list of walls
+                        for (vector<vector<int>> v : wallList) //For every wall in the list of walls
                         {
-                            MoveToEx(hdc, v[0][0], 500, 0);
-                            LineTo(hdc, v[0][0], 500 - v[0][1]);
+                            MoveToEx(hdc, v[0][0], v[0][1], 0);
+                            LineTo(hdc, v[0][0], v[0][2]);
 
-                            MoveToEx(hdc, v[0][0], 500, 0);
-                            LineTo(hdc, v[1][0], 500);
+                            MoveToEx(hdc, v[1][0], v[1][1], 0);
+                            LineTo(hdc, v[1][0], v[1][2]);
 
-                            MoveToEx(hdc, v[1][0], 500, 0);
-                            LineTo(hdc, v[1][0], 500 - v[1][1]);
+                            MoveToEx(hdc, v[0][0], v[0][1], 0);
+                            LineTo(hdc, v[1][0], v[1][1]);
 
-                            MoveToEx(hdc, v[0][0], 500 - v[0][1], 0);
-                            LineTo(hdc, v[1][0], 500 - v[1][1]);
+                            MoveToEx(hdc, v[1][0], v[1][2], 0);
+                            LineTo(hdc, v[0][0], v[0][2]);  
                         }
 
                     DeleteObject(hPen);
@@ -266,20 +284,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
                 if (GetAsyncKeyState((int)'W') < 0)
                 {
-                    player->setVelocity({ 0.05, 0.0, 0.0 });
+                    player->setVelocity({ 0.5, 0.0, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'A') < 0)
                 {
-                    player->setVelocity({ 0.0, -0.05, 0.0 });
+                    player->setVelocity({ 0.0, -0.5, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'S') < 0)
                 {
-                    player->setVelocity({ -0.05, 0.0, 0.0 });
+                    player->setVelocity({ -0.5, 0.0, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'D') < 0)
                 {
-                    player->setVelocity({ 0.0, 0.05, 0.0 });
+                    player->setVelocity({ 0.0, 0.5, 0.0 });
                 }
+
+                if (GetAsyncKeyState(VK_UP) < 0) {
+                    player->updateRotation(0.0, -0.50);
+                }
+                if (GetAsyncKeyState(VK_DOWN) < 0) {
+                    player->updateRotation(0.0, 0.50);
+                }
+
+                if (GetAsyncKeyState(VK_RIGHT) < 0) {
+                    player->updateRotation(0.50, 0);
+                }
+                if (GetAsyncKeyState(VK_LEFT) < 0) {
+                    player->updateRotation(-0.5, 0.0);
+                }
+
                 if (GetAsyncKeyState(VK_ESCAPE) < 0)
                 {
                     toggleCursor(lParam, hWnd);
@@ -303,6 +336,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                     player->setVelocity({ 0.0, 0.0, 0.0 });
                 }
+
         break;
 
         case WM_SETFOCUS:
@@ -315,6 +349,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             
             break;
         case WM_DESTROY:
+            FreeConsole();
+            freeEntities();
             PostQuitMessage(0);
         break;
 
