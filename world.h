@@ -14,13 +14,13 @@ class World
 	public:
 		World(string name);
 
-		void addEntity(Entity* entity);
-		vector<Entity*> getEntities();
-		void deleteEtity(Entity* entity);
+		void addEntity(Entity entity);
+		vector<Entity> getEntities();
+		void deleteEtity(Entity entity);
 
-		void addWall(Wall* wall);
-		vector<Wall*> getWalls();
-		void deleteWall(Wall* wall);
+		void addWall(Wall wall);
+		vector<Wall> getWalls();
+		void deleteWall(Wall wall);
 
 
 		void setMeasurements(vector<double>);
@@ -30,8 +30,8 @@ class World
 	private:
 		string name;
 		vector<double> measurements = { 0.0, 0.0, 0.0 };
-		vector<Entity*> entityList;
-		vector<Wall*> wallList;
+		vector<Entity> entityList;
+		vector<Wall> wallList;
 
 };
 

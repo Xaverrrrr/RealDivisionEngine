@@ -2,6 +2,7 @@
 	#define WALL_H
 	#include "entity.h"
 	#include "vector3.h"
+	#include "point.h"
 
 class Wall
 {
@@ -9,16 +10,13 @@ class Wall
 
 		Wall(string name);
 
-		void						setCoordinates(Vector3 start, Vector3 end);
-		vector<Vector3>				getCoordinates();
-		void						setDimensions(Vector3 x);
-		Vector3						getDimensions();
+		void						setCoordinates(Point lowerLeft, Point lowerRight, Point upperLeft, Point upperRight);
+		vector<Point>				getCoordinates();
 
 	private:
 
-		string name;
-
-		vector<Vector3> coordinates; //starting point and end point of wall
-		Vector3 dimensions;
+		string						name;
+		vector<Point>				coordinates; //Four vertices of wall
+		
 };
 #endif // !WALL_H

@@ -5,9 +5,11 @@
 #include <iostream>
 
 #include "entity.h"
+#include "point.h"
 #include "wall.h"
 #include "mathFuns.h"
 #include "vector3.h"
+#include "vector2.h"
 
 
 class Camera: public Entity {
@@ -21,8 +23,8 @@ public:
 	Vector3 getRotation();
 	void updateRotation(double x, double y, double z);
 
-	vector<vector<int>> renderEntities(vector<Entity*> entities);
-	vector<vector<vector<int>>> renderWalls(vector<Wall*> walls); //Returns a list of pairs (left and right side of wall) which themselfes contain a pair of both the x coordinate on the screen and the height of the line 
+	vector<Vector2> renderPoints(vector<Point> points);
+	vector<vector<Vector2>> renderWalls(vector<Wall> walls); //Returns a list of pairs (left and right side of wall) which themselfes contain a pair of both the x coordinate on the screen and the height of the line 
 
 	void setRenderDistance(int x);
 	int getRenderDistance();

@@ -6,19 +6,18 @@
 
 
 #include "mathFuns.h"
+#include "point.h"
 #include "entity.h"
 #include "camera.h"
 #include "wall.h"
 #include "world.h"
 #include "vector3.h"
+#include "vector2.h"
 
 
 #define MAX_LOADSTRING 1000
 
 bool CursorIsVisible = true;
-vector<vector<int>> entityList = { {0, 0, 0} };
-vector<vector<vector<int>>> wallList = { { {0, 0, 0}, {0, 0, 0} } };
-
 HINSTANCE hInst;        
 WCHAR szTitle[MAX_LOADSTRING];              
 WCHAR szWindowClass[MAX_LOADSTRING];   
@@ -27,49 +26,24 @@ BOOL InitInstance(HINSTANCE, int);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
-Camera* player = new Camera("PlayerCam1");
-World* world1 = new World("World1");
-Entity* test = new Entity("test");
-Entity* test1 = new Entity("test1");
+Camera player =  Camera("PlayerCam1");
+World world1 =  World("World1");
 
-Wall* wall = new Wall("wall");
-Wall* wall1 = new Wall("wall1");
-Wall* wall2 = new Wall("wall2");
-Wall* wall3 = new Wall("wall3");
+Point point = Point();
+Wall wall = Wall("test");
+vector<Point> pointList;
+vector<Wall> wallList;
 
 void initEntities() {
 
-    player->setPosition({ -10, 0, 0 });
-    player->setRenderDistance(500);
-    player->setFovXY(40);
+    player.setPosition({ -10, 0, 0 });
+    player.setRenderDistance(500);
+    player.setFovXY(40);
 
-    wall->setCoordinates(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 10.0, 0.0));
-    wall->setDimensions(Vector3(10, 0.0, 20 ));
-
-    wall1->setCoordinates(Vector3(0, 10, 0), Vector3(10, 10, 0));
-    wall1->setDimensions(Vector3( 0.0, 0.0, 20 ));
-
-    wall2->setCoordinates(Vector3(10, 10, 0), Vector3(10, 0, 0));
-    wall2->setDimensions(Vector3( 0.0, 0.0, 20 ));
-
-    wall3->setCoordinates(Vector3(10, 0, 0), Vector3(0, 0, 0));
-    wall3->setDimensions(Vector3( 0.0, 0.0, 20 ));
-
-    world1->addWall(wall);
-    world1->addWall(wall1);
-    world1->addWall(wall2);
-    world1->addWall(wall3);
-}
-
-void freeEntities() {
-    free(player);
-    free(wall);
-    free(wall1);
-    free(wall2);
-    free(wall3);
-    free(test);
-    free(test1);
-    free(world1);
+    point.setCoordinates(Vector3(5, 10, 10));
+    wall.setCoordinates(Point(5, 5, 5), Point(5, 10, 5), Point(5, 5, 10), Point(5, 10, 10));
+    wallList.push_back(wall);
+    pointList.push_back(point);
 }
 
 void CreateConsole()
@@ -102,10 +76,6 @@ void CreateConsole()
     std::wcin.clear();
 }
 
-void renderScreen() {
-    entityList = player->renderEntities(world1->getEntities());
-    wallList = player->renderWalls(world1->getWalls());
-}
 
 void toggleCursor(LPARAM lParam, HWND hWnd) {
     RECT rect;
@@ -174,10 +144,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         Sleep(1);                               //Delay makes animation smoother
         InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear 
 
-        player->updatePosition();               //Add velocity onto position
-
-        std::thread t1(renderScreen);
-        t1.join();
+        player.updatePosition();               //Add velocity onto position
     }
 
     return (int) msg.wParam;
@@ -208,7 +175,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    
-   MoveWindow(hWnd, 100, 100, 960, 540 + 40, TRUE); //+40 for title bar
+   MoveWindow(hWnd, 100, 100, 960, 540 + 40, TRUE); //+40 for menu bar
    SetWindowText(hWnd, "Boom");
    SetMenu(hWnd, NULL);
    ShowWindow(hWnd, nCmdShow);
@@ -241,6 +208,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 HDC hdc = BeginPaint(hWnd, &ps);
 
                     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+                    HPEN point = CreatePen(PS_DOT, 1, RGB(100, 100, 100));
                     SelectObject(hdc, hPen);
 
                         /*Draw Crosshair*/
@@ -254,27 +222,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
                         LineTo(hdc, (960 - 20) / 2, (540 - 20) / 2 - 10);
 
-
-
-                        for (vector<int> v : entityList) //For every entity in the list of entities
-                        {
-                            MoveToEx(hdc, v[0], 520, 0);
-                            LineTo(hdc, v[0], 520 - v[1]);
+                        SelectObject(hdc, point);
+                        for (Vector2 v : player.renderPoints(pointList)) {
+                            MoveToEx(hdc, v.x, v.y, 0);
+                            LineTo(hdc, v.x + 10, v.y + 10);
+                            MoveToEx(hdc, v.x, v.y, 0);
+                            LineTo(hdc, v.x + 10, v.y - 10);
+                            MoveToEx(hdc, v.x, v.y, 0);
+                            LineTo(hdc, v.x - 10, v.y - 10);
+                            MoveToEx(hdc, v.x, v.y, 0);
+                            LineTo(hdc, v.x - 10, v.y + 10);
                         }
 
-                        for (vector<vector<int>> v : wallList) //For every wall in the list of walls
+
+                        for (vector<Vector2> vv : player.renderWalls(wallList))
                         {
-                            MoveToEx(hdc, v[0][0], v[0][1], 0);
-                            LineTo(hdc, v[0][0], v[0][2]);
-
-                            MoveToEx(hdc, v[1][0], v[1][1], 0);
-                            LineTo(hdc, v[1][0], v[1][2]);
-
-                            MoveToEx(hdc, v[0][0], v[0][1], 0);
-                            LineTo(hdc, v[1][0], v[1][1]);
-
-                            MoveToEx(hdc, v[1][0], v[1][2], 0);
-                            LineTo(hdc, v[0][0], v[0][2]);  
+                            for (Vector2 v : vv)
+                            {
+                                MoveToEx(hdc, v.x, v.y, 0);
+                                LineTo(hdc, v.x + 10, v.y + 10);
+                                MoveToEx(hdc, v.x, v.y, 0);
+                                LineTo(hdc, v.x + 10, v.y - 10);
+                                MoveToEx(hdc, v.x, v.y, 0);
+                                LineTo(hdc, v.x - 10, v.y - 10);
+                                MoveToEx(hdc, v.x, v.y, 0);
+                                LineTo(hdc, v.x - 10, v.y + 10);
+                            }
                         }
 
                     DeleteObject(hPen);
@@ -287,19 +260,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
                 if (GetAsyncKeyState((int)'W') < 0)
                 {
-                    player->setVelocity({ 0.5, 0.0, 0.0 });
+                    player.setVelocity({ 0.5, 0.0, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'A') < 0)
                 {
-                    player->setVelocity({ 0.0, -0.5, 0.0 });
+                    player.setVelocity({ 0.0, -0.5, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'S') < 0)
                 {
-                    player->setVelocity({ -0.5, 0.0, 0.0 });
+                    player.setVelocity({ -0.5, 0.0, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'D') < 0)
                 {
-                    player->setVelocity({ 0.0, 0.5, 0.0 });
+                    player.setVelocity({ 0.0, 0.5, 0.0 });
                 }
 
                 if (GetAsyncKeyState(VK_ESCAPE) < 0)
@@ -311,19 +284,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_KEYUP:
                 if (GetAsyncKeyState((int)'W') == 0)
                 {
-                    player->setVelocity({ 0.0, 0.0, 0.0 });
+                    player.setVelocity({ 0.0, 0.0, 0.0 });
                 }
                 if (!GetAsyncKeyState((int)'A') == 0)
                 {
-                    player->setVelocity({ 0.0, 0.0, 0.0 });
+                    player.setVelocity({ 0.0, 0.0, 0.0 });
                 }
                 if (!GetAsyncKeyState((int)'S') == 0)
                 {
-                    player->setVelocity({ 0.0, 0.0, 0.0 });
+                    player.setVelocity({ 0.0, 0.0, 0.0 });
                 }
                 if (!GetAsyncKeyState((int)'D') == 0)
                 {
-                    player->setVelocity({ 0.0, 0.0, 0.0 });
+                    player.setVelocity({ 0.0, 0.0, 0.0 });
                 }
 
         break;
@@ -339,7 +312,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case WM_DESTROY:
             FreeConsole();
-            freeEntities();
             PostQuitMessage(0);
         break;
 
