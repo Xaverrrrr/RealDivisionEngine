@@ -29,21 +29,17 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 Camera player =  Camera("PlayerCam1");
 World world1 =  World("World1");
 
-Point point = Point();
 Wall wall = Wall("test");
-vector<Point> pointList;
 vector<Wall> wallList;
 
 void initEntities() {
 
     player.setPosition({ -10, 0, 0 });
     player.setRenderDistance(500);
-    player.setFovXY(40);
+    player.setFovXY(90);
 
-    point.setCoordinates(Vector3(5, 10, 10));
-    wall.setCoordinates(Point(5, 5, 5), Point(5, 10, 5), Point(5, 5, 10), Point(5, 10, 10));
+    wall.setCoordinates(Point(0, 0, 0), Point(0, 0, 10), Point(10, 10, 10), Point(10, 10, 0));
     wallList.push_back(wall);
-    pointList.push_back(point);
 }
 
 void CreateConsole()
@@ -208,7 +204,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 HDC hdc = BeginPaint(hWnd, &ps);
 
                     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-                    HPEN point = CreatePen(PS_DOT, 1, RGB(100, 100, 100));
                     SelectObject(hdc, hPen);
 
                         /*Draw Crosshair*/
@@ -222,32 +217,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
                         LineTo(hdc, (960 - 20) / 2, (540 - 20) / 2 - 10);
 
-                        SelectObject(hdc, point);
-                        for (Vector2 v : player.renderPoints(pointList)) {
-                            MoveToEx(hdc, v.x, v.y, 0);
-                            LineTo(hdc, v.x + 10, v.y + 10);
-                            MoveToEx(hdc, v.x, v.y, 0);
-                            LineTo(hdc, v.x + 10, v.y - 10);
-                            MoveToEx(hdc, v.x, v.y, 0);
-                            LineTo(hdc, v.x - 10, v.y - 10);
-                            MoveToEx(hdc, v.x, v.y, 0);
-                            LineTo(hdc, v.x - 10, v.y + 10);
-                        }
 
+                        SelectObject(hdc, hPen);
 
-                        for (vector<Vector2> vv : player.renderWalls(wallList))
+                        for (vector<Vector2> v : player.renderWalls(wallList))
                         {
-                            for (Vector2 v : vv)
-                            {
-                                MoveToEx(hdc, v.x, v.y, 0);
-                                LineTo(hdc, v.x + 10, v.y + 10);
-                                MoveToEx(hdc, v.x, v.y, 0);
-                                LineTo(hdc, v.x + 10, v.y - 10);
-                                MoveToEx(hdc, v.x, v.y, 0);
-                                LineTo(hdc, v.x - 10, v.y - 10);
-                                MoveToEx(hdc, v.x, v.y, 0);
-                                LineTo(hdc, v.x - 10, v.y + 10);
-                            }
+                                MoveToEx(hdc, v[0].x, v[0].y, 0);
+                                LineTo(hdc, v[1].x, v[1].y);
+
+                                MoveToEx(hdc, v[1].x, v[1].y, 0);
+                                LineTo(hdc, v[2].x, v[2].y);
+
+                                MoveToEx(hdc, v[2].x, v[2].y, 0);
+                                LineTo(hdc, v[3].x, v[3].y);
+
+                                MoveToEx(hdc, v[3].x, v[3].y, 0);
+                                LineTo(hdc, v[0].x, v[0].y);
                         }
 
                     DeleteObject(hPen);
@@ -273,6 +258,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (GetAsyncKeyState((int)'D') < 0)
                 {
                     player.setVelocity({ 0.0, 0.5, 0.0 });
+                }
+
+                if (GetAsyncKeyState((int)'O') < 0)
+                {
+                    player.setVelocity({ 0.0, 0.0, 0.5 });
+                }
+                if (GetAsyncKeyState((int)'L') < 0)
+                {
+                    player.setVelocity({ 0.0, 0.0, -0.5 });
                 }
 
                 if (GetAsyncKeyState(VK_ESCAPE) < 0)

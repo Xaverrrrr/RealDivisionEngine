@@ -9,6 +9,7 @@ class Wall
 	public:
 
 		Wall(string name);
+		Wall(string name, vector<Point> vertices);
 
 		void						setCoordinates(Point lowerLeft, Point lowerRight, Point upperLeft, Point upperRight);
 		vector<Point>				getCoordinates();

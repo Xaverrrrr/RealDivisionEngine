@@ -29,7 +29,7 @@ double MathFuns::map(double x, double in_min, double in_max, double out_min, dou
         double mid = (out_min + out_max) / 2;
         double range = (out_max - out_min) / 2;
         double offset = mid - mapped;
-        double compressed = mid - offset * 2;
+        double compressed = mid - offset * 4;
         if (compressed < mid - range) {
             return out_min;
         }

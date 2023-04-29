@@ -53,17 +53,20 @@ vector<Vector2> Camera::renderPoints(vector<Point> points) {
 			deltaPosition.y = var.getCoordinates().y - myPosition.y;
 			deltaPosition.z = var.getCoordinates().z - myPosition.z;
 
-		if (deltaPosition.length() <= this->getRenderDistance()) 
+		if (deltaPosition.length() <= this->getRenderDistance())
 		{
 			double angleXY = MathFuns::radToDeg(atan2(deltaPosition.y, deltaPosition.x)) - myRotation.x;
 			double angleXZ = MathFuns::radToDeg(atan2(deltaPosition.z, deltaPosition.x)) - myRotation.y;
 
 			output.push_back(
 				Vector2(
-					(int)round(MathFuns::map(angleXY, -this->FovXY, this->FovXY, 0, 960)),		//X-Position on Screen
-					(int)round(MathFuns::map(angleXZ, -this->FovXZ, this->FovXZ, 0, 540))		//Y-Position on Screen
+					(int)round(MathFuns::map(angleXY, -this->FovXY, this->FovXY, 0 - 100, 960 + 100)),		//X-Position on Screen
+					(int)round(MathFuns::map(angleXZ, -this->FovXZ, this->FovXZ, 0 - 100, 540 + 100))		//Y-Position on Screen
 				)
 			);	
+		}
+		else {
+			output.push_back(Vector2(-1, -1)); //if not renderable, we push a dummy
 		}
 	}
 	return output;
@@ -71,11 +74,23 @@ vector<Vector2> Camera::renderPoints(vector<Point> points) {
 
 vector<vector<Vector2>> Camera::renderWalls(vector<Wall> walls) {
 
-	vector<vector<Vector2>> output;
+	vector<vector<Vector2>> output = { { Vector2(-1,-1), Vector2(-1,-1), Vector2(-1,-1), Vector2(-1,-1) } };
 
 	for (Wall var : walls)
 	{
-		output.push_back(Camera::renderPoints(var.getCoordinates()));
+		vector<Vector2> coordinatesOnScreen = Camera::renderPoints(var.getCoordinates());
+		if (coordinatesOnScreen[0].x >= 0 &&
+			coordinatesOnScreen[0].y >= 0 &&
+			coordinatesOnScreen[1].x >= 0 &&
+			coordinatesOnScreen[1].y >= 0 &&
+			coordinatesOnScreen[2].x >= 0 &&
+			coordinatesOnScreen[2].y >= 0 &&
+			coordinatesOnScreen[3].x >= 0 &&
+			coordinatesOnScreen[3].y >= 0
+			) {
+
+			output.push_back(coordinatesOnScreen);
+		}
 	}
 
 	return output;
