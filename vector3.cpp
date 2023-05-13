@@ -37,7 +37,7 @@ double Vector3::length()
 	double myYsquared = this->y * this->y;
 	double myZsquared = this->z * this->z;
 
-	return sqrt(pow(sqrt(myXsquared + myYsquared), 2) + myZsquared);
+	return abs(sqrt(pow(sqrt(myXsquared + myYsquared), 2) + myZsquared));
 }
 
 void Vector3::add(Vector3 vec)

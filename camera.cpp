@@ -1,15 +1,15 @@
 #include "camera.h"
+#include <cmath>
 
-
+double M_PI = 3.1415;
 
 Camera::Camera(string name) : Entity(name) {
 	this->name = name;
 }
 
-void Camera::setFovXY(int fov)
+void Camera::setFov(int fov)
 {
-	this->FovXY = fov;
-	this->FovXZ = round(fov / (16/9));
+	this->Fov = fov;
 }
 
 void Camera::setRenderDistance(int x) {
@@ -20,9 +20,9 @@ int Camera::getRenderDistance() {
 	return this->renderDistance;
 }
 
-int Camera::getFovXY()
+int Camera::getFov()
 {
-	return this->FovXY;
+	return this->Fov;
 }
 
 void Camera::setRotation(Vector3 rotation) {
@@ -39,59 +39,98 @@ Vector3 Camera::getRotation() {
 	return this->rotation;
 }
 
-vector<Vector2> Camera::renderPoints(vector<Point> points) {
-	vector<Vector2> output;
-	Vector2 myRotation;
-		myRotation.x = MathFuns::radToDeg(atan2(this->getRotation().y, this->getRotation().x));
-		myRotation.y = MathFuns::radToDeg(atan2(this->getRotation().z, this->getRotation().x));
-	Vector3 myPosition = this->getPosition();
+vector<Vector3> Camera::createRotationMatrix(Vector3 rotationAngles) {
+	double x = rotationAngles.x;
+	double y = rotationAngles.y;
+	double z = rotationAngles.z;
 
-	for (Point var : points)
+	// Convert rotation angles to radians
+	double radX = MathFuns::degToRad(x);
+	double radY = MathFuns::degToRad(y);
+	double radZ = MathFuns::degToRad(z);
+
+	// Calculate sine and cosine values
+	double sinX = sin(radX);
+	double cosX = cos(radX);
+	double sinY = sin(radY);
+	double cosY = cos(radY);
+	double sinZ = sin(radZ);
+	double cosZ = cos(radZ);
+
+	// Create the rotation matrix
+	vector<Vector3> rotationMatrix;
+	rotationMatrix = {
+		Vector3(cosY * cosZ, -cosY * sinZ, sinY),
+		Vector3(sinX * sinY * cosZ + cosX * sinZ, -sinX * sinY * sinZ + cosX * cosZ, -sinX * cosY),
+		Vector3(-cosX * sinY * cosZ + sinX * sinZ, cosX * sinY * sinZ + sinX * cosZ, cosX * cosY)
+	};
+
+	return rotationMatrix;
+}
+
+Vector3 Camera::multiplyMatrixVector(const vector<Vector3>& matrix, const Vector3& vector) {
+	double x = vector.x;
+	double y = vector.y;
+	double z = vector.z;
+
+	double resultX = matrix[0].x * x + matrix[0].y * y + matrix[0].z * z;
+	double resultY = matrix[1].x * x + matrix[1].y * y + matrix[1].z * z;
+	double resultZ = matrix[2].x * x + matrix[2].y * y + matrix[2].z * z;
+
+	return Vector3(resultX, resultY, resultZ);
+}
+
+Vector2 Camera::renderPoint(Point point) {
+    Vector2 output;
+
+    Vector3 cameraPosition	= this->getPosition();
+    Vector3 cameraRotation	= this->getRotation();
+    Vector3 pointPosition	= point.getCoordinates();
+
+	double	width			= 960.0;
+	double	height			= 540.0;
+    double	nearClipping	= 10;
+    double	farClipping		= this->getRenderDistance();
+    double	aspectRatio		= width / height;
+
+	double  fovx			= this->getFov();
+    double	fovy			= 2.0 * atan(tan(fovx * 0.5) / aspectRatio);
+
+	double  widthViewPlane	= tan(fovx) * nearClipping * 2;
+	double  heightViewPlane	= tan(fovy) * nearClipping * 2;
+
+	vector<Vector3> rotationMatrix = createRotationMatrix(cameraRotation);
+	Vector3 rotatedPointPosition = multiplyMatrixVector(rotationMatrix, pointPosition);
+
+	Vector3 pointCamDelta;
+	pointCamDelta.x = rotatedPointPosition.x - cameraPosition.x;
+	pointCamDelta.y = rotatedPointPosition.y - cameraPosition.y;
+	pointCamDelta.z = rotatedPointPosition.z - cameraPosition.z;
+
+	double  angleXY = MathFuns::radToDeg(atan2(pointCamDelta.y, pointCamDelta.x));
+
+	if (pointCamDelta.length() < farClipping && angleXY > -fovx && angleXY < fovx) 
 	{
-		Vector3 deltaPosition;
-			deltaPosition.x = var.getCoordinates().x - myPosition.x;
-			deltaPosition.y = var.getCoordinates().y - myPosition.y;
-			deltaPosition.z = var.getCoordinates().z - myPosition.z;
+		output.x = nearClipping / (pointCamDelta.x / pointCamDelta.y) * widthViewPlane;
+		output.y = nearClipping / (pointCamDelta.x / pointCamDelta.z) * heightViewPlane;
 
-		if (deltaPosition.length() <= this->getRenderDistance())
-		{
-			double angleXY = MathFuns::radToDeg(atan2(deltaPosition.y, deltaPosition.x)) - myRotation.x;
-			double angleXZ = MathFuns::radToDeg(atan2(deltaPosition.z, deltaPosition.x)) - myRotation.y;
-
-			output.push_back(
-				Vector2(
-					(int)round(MathFuns::map(angleXY, -this->FovXY, this->FovXY, 0 - 100, 960 + 100)),		//X-Position on Screen
-					(int)round(MathFuns::map(angleXZ, -this->FovXZ, this->FovXZ, 0 - 100, 540 + 100))		//Y-Position on Screen
-				)
-			);	
-		}
-		else {
-			output.push_back(Vector2(-1, -1)); //if not renderable, we push a dummy
-		}
+		return output;
 	}
-	return output;
 }
 
 vector<vector<Vector2>> Camera::renderWalls(vector<Wall> walls) {
 
-	vector<vector<Vector2>> output = { { Vector2(-1,-1), Vector2(-1,-1), Vector2(-1,-1), Vector2(-1,-1) } };
+	vector<vector<Vector2>> output;
 
-	for (Wall var : walls)
-	{
-		vector<Vector2> coordinatesOnScreen = Camera::renderPoints(var.getCoordinates());
-		if (coordinatesOnScreen[0].x >= 0 &&
-			coordinatesOnScreen[0].y >= 0 &&
-			coordinatesOnScreen[1].x >= 0 &&
-			coordinatesOnScreen[1].y >= 0 &&
-			coordinatesOnScreen[2].x >= 0 &&
-			coordinatesOnScreen[2].y >= 0 &&
-			coordinatesOnScreen[3].x >= 0 &&
-			coordinatesOnScreen[3].y >= 0
-			) {
-
-			output.push_back(coordinatesOnScreen);
-		}
-	}
+	//for (Wall var : walls)
+	//{
+	//	Vector2 coordinatesOnScreen;
+	//	for (Point point : var.getCoordinates()) {
+	//		coordinatesOnScreen = this->renderPoints(point);
+	//		output.push_back({ coordinatesOnScreen });
+	//	}
+	//		
+	//}
 
 	return output;
 }

@@ -27,19 +27,24 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
 Camera player =  Camera("PlayerCam1");
-World world1 =  World("World1");
+World world =  World("World");
 
-Wall wall = Wall("test");
-vector<Wall> wallList;
+Wall wall = Wall("wall");
+Wall floor1 = Wall("floor");
+vector<vector<Vector2>> wallVertices;
+Point point = Point(10, 5, 10);
+Point point2 = Point(10, -5, 10);
 
 void initEntities() {
 
-    player.setPosition({ -10, 0, 0 });
-    player.setRenderDistance(500);
-    player.setFovXY(90);
+    player.setPosition({ 0, 0, 0 });
+    player.setRenderDistance(2000);
+    player.setFov(90);
 
-    wall.setCoordinates(Point(0, 0, 0), Point(0, 0, 10), Point(10, 10, 10), Point(10, 10, 0));
-    wallList.push_back(wall);
+    wall.setCoordinates(Point(0, 0, 0), Point(0, 0, -10), Point(10, 10, -10), Point(10, 10, 0));
+    floor1.setCoordinates(Point(0, 0, 0), Point(100, 0, 0), Point(100, 20, 0), Point(0, 20, 0));
+    //world.addWall(wall);
+    //world.addWall(floor1);
 }
 
 void CreateConsole()
@@ -72,6 +77,9 @@ void CreateConsole()
     std::wcin.clear();
 }
 
+void renderScreen() {
+    wallVertices = player.renderWalls(world.getWalls());
+}
 
 void toggleCursor(LPARAM lParam, HWND hWnd) {
     RECT rect;
@@ -137,10 +145,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         /***********************
         *RENDERING HAPPENS HERE*
         ************************/
-        Sleep(1);                               //Delay makes animation smoother
-        InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear 
-
         player.updatePosition();               //Add velocity onto position
+        thread renderThread(&renderScreen);
+        Sleep(2);                               //Delay makes animation smoother
+        InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear 
+        renderThread.join();
     }
 
     return (int) msg.wParam;
@@ -217,25 +226,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
                         LineTo(hdc, (960 - 20) / 2, (540 - 20) / 2 - 10);
 
+                        auto var = player.renderPoint(point);
+                        Ellipse(hdc, 480 + var.x - 2, 270 + var.y - 2, 480 + var.x + 2, 270 + var.y + 2);
 
-                        SelectObject(hdc, hPen);
-
-                        for (vector<Vector2> v : player.renderWalls(wallList))
-                        {
-                                MoveToEx(hdc, v[0].x, v[0].y, 0);
-                                LineTo(hdc, v[1].x, v[1].y);
-
-                                MoveToEx(hdc, v[1].x, v[1].y, 0);
-                                LineTo(hdc, v[2].x, v[2].y);
-
-                                MoveToEx(hdc, v[2].x, v[2].y, 0);
-                                LineTo(hdc, v[3].x, v[3].y);
-
-                                MoveToEx(hdc, v[3].x, v[3].y, 0);
-                                LineTo(hdc, v[0].x, v[0].y);
-                        }
-
-                    DeleteObject(hPen);
+                        auto var2 = player.renderPoint(point2);
+                        Ellipse(hdc, 480 + var2.x - 2, 270 + var2.y - 2, 480 + var2.x + 2, 270 + var2.y + 2);
+                   
+                        DeleteObject(hPen);
 
 
                 EndPaint(hWnd, &ps);
@@ -245,28 +242,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
                 if (GetAsyncKeyState((int)'W') < 0)
                 {
-                    player.setVelocity({ 0.5, 0.0, 0.0 });
+                    player.setVelocity({ 1, 0.0, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'A') < 0)
                 {
-                    player.setVelocity({ 0.0, -0.5, 0.0 });
+                    player.setVelocity({ 0.0, -1, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'S') < 0)
                 {
-                    player.setVelocity({ -0.5, 0.0, 0.0 });
+                    player.setVelocity({ -1, 0.0, 0.0 });
                 }
                 if (GetAsyncKeyState((int)'D') < 0)
                 {
-                    player.setVelocity({ 0.0, 0.5, 0.0 });
+                    player.setVelocity({ 0.0, 1, 0.0 });
                 }
 
                 if (GetAsyncKeyState((int)'O') < 0)
                 {
-                    player.setVelocity({ 0.0, 0.0, 0.5 });
+                    player.setVelocity({ 0.0, 0.0, -1 });
                 }
                 if (GetAsyncKeyState((int)'L') < 0)
                 {
-                    player.setVelocity({ 0.0, 0.0, -0.5 });
+                    player.setVelocity({ 0.0, 0.0, 1 });
                 }
 
                 if (GetAsyncKeyState(VK_ESCAPE) < 0)
@@ -300,13 +297,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_MOUSEMOVE:
-            int mouseX;
-            int mouseY;
+            MSLLHOOKSTRUCT* pMouseStruct = (MSLLHOOKSTRUCT*)lParam;
+            POINT pt = pMouseStruct->pt;
+
+            pt.x;
+            pt.y;
             
             break;
         case WM_DESTROY:
             FreeConsole();
             PostQuitMessage(0);
+            std::_Exit(EXIT_SUCCESS);
         break;
 
         default:

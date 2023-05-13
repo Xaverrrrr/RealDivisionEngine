@@ -1,6 +1,6 @@
 #ifndef VECTOR3_H
 	#define VECTOR3_H
-
+#include <iostream>
 class Vector3 {
 
 public:
@@ -11,9 +11,9 @@ public:
 	void add(Vector3 vec);
 	void subtract(Vector3 vec);
 
-	double x = 0.0;
-	double y = 0.0;
-	double z = 0.0;
+	double x;
+	double y;
+	double z;
 };
 
 #endif // !VECTOR3_H
