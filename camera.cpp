@@ -95,7 +95,7 @@ Vector2 Camera::renderPoint(Point point) {
     double	fovy			= 2.0 * atan(tan(fovx * 0.5) / aspectRatio);
 
 	double  widthViewPlane	= tan(fovx) * nearClipping * 2;
-	double  heightViewPlane	= tan(fovy) * nearClipping * 2;
+	double  heightViewPlane	= widthViewPlane * (9 / 16);
 
 	vector<Vector3> rotationMatrix = createRotationMatrix(cameraRotation);
 	Vector3 rotatedPointPosition = multiplyMatrixVector(rotationMatrix, pointPosition);
