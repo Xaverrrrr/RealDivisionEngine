@@ -17,7 +17,7 @@
 
 #define MAX_LOADSTRING 1000
 
-bool CursorIsVisible = true;
+
 HINSTANCE hInst;        
 WCHAR szTitle[MAX_LOADSTRING];              
 WCHAR szWindowClass[MAX_LOADSTRING];   
@@ -26,14 +26,19 @@ BOOL InitInstance(HINSTANCE, int);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
+bool CursorIsVisible = true;
+int width = 960;
+int height = 540;
+
 Camera player =  Camera("PlayerCam1");
 World world =  World("World");
-
 Wall wall = Wall("wall");
 Wall floor1 = Wall("floor");
 vector<vector<Vector2>> wallVertices;
 Point point = Point(10, 5, 10);
 Point point2 = Point(10, -5, 10);
+Point point3 = Point(10, 5, 0);
+Point point4 = Point(10, -5, 0);
 
 void initEntities() {
 
@@ -103,12 +108,12 @@ void toggleCursor(LPARAM lParam, HWND hWnd) {
     rect.bottom = lr.y;
 
     if (CursorIsVisible) {
-        ShowCursor(false);
+        //ShowCursor(false);
         ClipCursor(&rect);
         CursorIsVisible = false;
     }
     else {
-        ShowCursor(true);
+        //ShowCursor(true);
         ClipCursor(NULL);
         CursorIsVisible = true;
     }
@@ -180,7 +185,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    
-   MoveWindow(hWnd, 100, 100, 960, 540 + 40, TRUE); //+40 for menu bar
+   MoveWindow(hWnd, 100, 100, width, height + 40, TRUE); //+40 for menu bar
    SetWindowText(hWnd, "Boom");
    SetMenu(hWnd, NULL);
    ShowWindow(hWnd, nCmdShow);
@@ -213,25 +218,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 HDC hdc = BeginPaint(hWnd, &ps);
 
                     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-                    SelectObject(hdc, hPen);
+                    HPEN crosshairPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
+                    SelectObject(hdc, crosshairPen);
+                    Ellipse(hdc, width / 2 - 2, height / 2 - 2, width / 2 + 2, height / 2 + 2);
+                    
 
                         /*Draw Crosshair*/
-
-                        MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0); 
-                        LineTo(hdc, (960 - 20) / 2 + 10, (540 - 20) / 2);
-                        MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
-                        LineTo(hdc, (960 - 20) / 2 - 10, (540 - 20) / 2);
-                        MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
-                        LineTo(hdc, (960 - 20) / 2, (540 - 20) / 2 + 10);
-                        MoveToEx(hdc, (960 - 20) / 2, (540 - 20) / 2, 0);
-                        LineTo(hdc, (960 - 20) / 2, (540 - 20) / 2 - 10);
-
+                        
+                    SelectObject(hdc, hPen);
                         auto var = player.renderPoint(point);
                         Ellipse(hdc, 480 + var.x - 2, 270 + var.y - 2, 480 + var.x + 2, 270 + var.y + 2);
 
                         auto var2 = player.renderPoint(point2);
                         Ellipse(hdc, 480 + var2.x - 2, 270 + var2.y - 2, 480 + var2.x + 2, 270 + var2.y + 2);
                    
+                        auto var3 = player.renderPoint(point3);
+                        Ellipse(hdc, 480 + var3.x - 2, 270 + var3.y - 2, 480 + var3.x + 2, 270 + var3.y + 2);
+
+                        auto var4 = player.renderPoint(point4);
+                        Ellipse(hdc, 480 + var4.x - 2, 270 + var4.y - 2, 480 + var4.x + 2, 270 + var4.y + 2);
+
                         DeleteObject(hPen);
 
 
@@ -255,15 +261,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (GetAsyncKeyState((int)'D') < 0)
                 {
                     player.setVelocity({ 0.0, 1, 0.0 });
-                }
-
-                if (GetAsyncKeyState((int)'O') < 0)
-                {
-                    player.setVelocity({ 0.0, 0.0, -1 });
-                }
-                if (GetAsyncKeyState((int)'L') < 0)
-                {
-                    player.setVelocity({ 0.0, 0.0, 1 });
                 }
 
                 if (GetAsyncKeyState(VK_ESCAPE) < 0)
@@ -297,12 +294,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_MOUSEMOVE:
-            MSLLHOOKSTRUCT* pMouseStruct = (MSLLHOOKSTRUCT*)lParam;
-            POINT pt = pMouseStruct->pt;
 
-            pt.x;
-            pt.y;
+            POINT center;
+            center.x = width / 2;
+            center.y = height / 2;
+            ClientToScreen(hWnd, &center);
+
+            POINT pt;
+            GetCursorPos(&pt);
+            ScreenToClient(hWnd, &pt);
             
+
+            double mappedDeltaX, mappedDeltaY;
+
+            mappedDeltaX = MathFuns::mapLinear(pt.x, 0, width, -1, 1);
+            mappedDeltaY = MathFuns::mapLinear(pt.y, 0, height, -1, 1);
+
+
+            if (!CursorIsVisible) {
+                SetCursorPos(center.x, center.y);
+                player.updateRotation(mappedDeltaX * 5, mappedDeltaY * 5, 0);
+            }
+
             break;
         case WM_DESTROY:
             FreeConsole();

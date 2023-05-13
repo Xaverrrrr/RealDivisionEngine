@@ -50,20 +50,18 @@ vector<Vector3> Camera::createRotationMatrix(Vector3 rotationAngles) {
 	double radZ = MathFuns::degToRad(z);
 
 	// Calculate sine and cosine values
-	double sinX = sin(radX);
-	double cosX = cos(radX);
-	double sinY = sin(radY);
-	double cosY = cos(radY);
-	double sinZ = sin(radZ);
-	double cosZ = cos(radZ);
+	double sinGam = sin(radX);
+	double cosGam = cos(radX);
+	double sinBet = sin(radY);
+	double cosBet = cos(radY);
+	double sinAlp = sin(radZ);
+	double cosAlp = cos(radZ);
 
 	// Create the rotation matrix
 	vector<Vector3> rotationMatrix;
-	rotationMatrix = {
-		Vector3(cosY * cosZ, -cosY * sinZ, sinY),
-		Vector3(sinX * sinY * cosZ + cosX * sinZ, -sinX * sinY * sinZ + cosX * cosZ, -sinX * cosY),
-		Vector3(-cosX * sinY * cosZ + sinX * sinZ, cosX * sinY * sinZ + sinX * cosZ, cosX * cosY)
-	};
+	rotationMatrix.push_back(Vector3(cosAlp * cosBet, cosAlp * sinBet * sinGam - sinAlp * cosGam, cosAlp * sinBet * cosGam + sinAlp * sinGam));
+	rotationMatrix.push_back(Vector3(sinAlp * cosBet, sinAlp * sinBet * sinGam + cosAlp * cosGam, sinAlp * sinBet * cosGam - cosAlp * sinGam));
+	rotationMatrix.push_back(Vector3(-sinBet, cosBet * sinGam, cosBet * cosGam));
 
 	return rotationMatrix;
 }
