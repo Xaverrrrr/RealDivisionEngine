@@ -87,34 +87,56 @@ Vector2 Camera::renderPoint(Point point) {
     Vector3 cameraRotation	= this->getRotation();
     Vector3 pointPosition	= point.getCoordinates();
 
-	double	width			= 960.0;
-	double	height			= 540.0;
-    double	nearClipping	= 10;
-    double	farClipping		= this->getRenderDistance();
-    double	aspectRatio		= width / height;
+	float angle = MathFuns::radToDeg(atan2(pointPosition.y - cameraPosition.y, pointPosition.x - cameraPosition.x));
+	float fov = this->getFov();
+	float width = 960;
+	float height = 540;
+	float aspectRatio = width / height;
+	float far = this->getRenderDistance();
+	float near = 1;
 
-	double  fovx			= this->getFov();
-    double	fovy			= 2.0 * atan(tan(fovx * 0.5) / aspectRatio);
 
-	double  widthViewPlane	= tan(fovx) * nearClipping * 2;
-	double  heightViewPlane	= tan(fovy) * nearClipping * 2;
+	// Transform the 3D point from world space to camera space
+	Vector3 cameraSpacePoint = {
+		pointPosition.z - cameraPosition.z,
+		pointPosition.y - cameraPosition.y,
+		pointPosition.x - cameraPosition.x
+	};
 
-	vector<Vector3> rotationMatrix = createRotationMatrix(cameraRotation);
-	Vector3 rotatedPointPosition = multiplyMatrixVector(rotationMatrix, pointPosition);
+	if (angle < fov && angle > -fov && cameraSpacePoint.length() < far) {
 
-	Vector3 pointCamDelta;
-	pointCamDelta.x = rotatedPointPosition.x - cameraPosition.x;
-	pointCamDelta.y = rotatedPointPosition.y - cameraPosition.y;
-	pointCamDelta.z = rotatedPointPosition.z - cameraPosition.z;
+		// Create perspective projection matrix
+		float f = 1.0f / std::tan(fov / 2.0f);
 
-	double  angleXY = MathFuns::radToDeg(atan2(pointCamDelta.y, pointCamDelta.x));
+		float projMatrix[4][4] = {
+			{f / aspectRatio, 0, 0, 0},
+			{0, f, 0, 0},
+			{0, 0, (far + near) / (far - near), 2 * far * near / (far - near)},
+			{0, 0, 1, 0}
+		};
 
-	if (pointCamDelta.length() < farClipping && angleXY > -fovx && angleXY < fovx) 
-	{
-		output.x = nearClipping / (pointCamDelta.x / pointCamDelta.y) * widthViewPlane;
-		output.y = nearClipping / (pointCamDelta.x / pointCamDelta.z) * heightViewPlane;
+		// Multiply the camera space point by the perspective projection matrix
+		float clipSpacePoint[4] = {
+			projMatrix[0][0] * cameraSpacePoint.x + projMatrix[0][1] * cameraSpacePoint.y + projMatrix[0][2] * cameraSpacePoint.z + projMatrix[0][3],
+			projMatrix[1][0] * cameraSpacePoint.x + projMatrix[1][1] * cameraSpacePoint.y + projMatrix[1][2] * cameraSpacePoint.z + projMatrix[1][3],
+			projMatrix[2][0] * cameraSpacePoint.x + projMatrix[2][1] * cameraSpacePoint.y + projMatrix[2][2] * cameraSpacePoint.z + projMatrix[2][3],
+			projMatrix[3][0] * cameraSpacePoint.x + projMatrix[3][1] * cameraSpacePoint.y + projMatrix[3][2] * cameraSpacePoint.z + projMatrix[3][3]
+		};
 
-		return output;
+		// Perform perspective division to obtain the normalized device coordinates (NDC)
+		Vector3 ndc = {
+			clipSpacePoint[0] / clipSpacePoint[3],
+			clipSpacePoint[1] / clipSpacePoint[3],
+			clipSpacePoint[2] / clipSpacePoint[3]
+		};
+
+		// Convert the NDC to screen coordinates
+		Vector2 screenPoint = {
+			((ndc.y + 1.0f) / 2.0f) * width + MathFuns::mapLinear(cameraRotation.x, 0, 360, 0, width),
+			((ndc.x + 1.0f) / 2.0f) * height + MathFuns::mapLinear(cameraRotation.y, 0, 360, 0, height)
+		};
+
+		return screenPoint;
 	}
 }
 

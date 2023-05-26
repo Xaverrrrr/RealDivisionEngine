@@ -38,8 +38,8 @@ Point point2 = Point(10, -5, 10);
 void initEntities() {
 
     player.setPosition({ 0, 0, 0 });
-    player.setRenderDistance(2000);
-    player.setFov(90);
+    player.setRenderDistance(1000);
+    player.setFov(70);
 
     wall.setCoordinates(Point(0, 0, 0), Point(0, 0, -10), Point(10, 10, -10), Point(10, 10, 0));
     floor1.setCoordinates(Point(0, 0, 0), Point(100, 0, 0), Point(100, 20, 0), Point(0, 20, 0));
@@ -227,10 +227,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         LineTo(hdc, (960 - 20) / 2, (540 - 20) / 2 - 10);
 
                         auto var = player.renderPoint(point);
-                        Ellipse(hdc, 480 + var.x - 2, 270 + var.y - 2, 480 + var.x + 2, 270 + var.y + 2);
+                        Ellipse(hdc, var.x - 2, var.y - 2, var.x + 2, var.y + 2);
 
                         auto var2 = player.renderPoint(point2);
-                        Ellipse(hdc, 480 + var2.x - 2, 270 + var2.y - 2, 480 + var2.x + 2, 270 + var2.y + 2);
+                        Ellipse(hdc, var2.x - 2, var2.y - 2, var2.x + 2, var2.y + 2);
                    
                         DeleteObject(hPen);
 
@@ -259,11 +259,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                 if (GetAsyncKeyState((int)'O') < 0)
                 {
-                    player.setVelocity({ 0.0, 0.0, -1 });
+                    player.updateRotation(1, 0, 0);
                 }
                 if (GetAsyncKeyState((int)'L') < 0)
                 {
-                    player.setVelocity({ 0.0, 0.0, 1 });
+                    player.updateRotation( 0.0, 1.0, 0 );
                 }
 
                 if (GetAsyncKeyState(VK_ESCAPE) < 0)
@@ -296,14 +296,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             toggleCursor(lParam, hWnd);
             break;
 
-        case WM_MOUSEMOVE:
-            MSLLHOOKSTRUCT* pMouseStruct = (MSLLHOOKSTRUCT*)lParam;
-            POINT pt = pMouseStruct->pt;
-
-            pt.x;
-            pt.y;
-            
-            break;
         case WM_DESTROY:
             FreeConsole();
             PostQuitMessage(0);
