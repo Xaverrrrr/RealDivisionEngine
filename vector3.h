@@ -6,10 +6,14 @@ class Vector3 {
 public:
 	Vector3(double x, double y, double z);
 	Vector3();
-	Vector3 normalise();
+	
 	double length();
 	void add(Vector3 vec);
 	void subtract(Vector3 vec);
+
+	static Vector3 cross(const Vector3& a, const Vector3& b);
+	static double dot(const Vector3& a, const Vector3& b);
+	static Vector3 normalize(const Vector3& a);
 
 	double x;
 	double y;

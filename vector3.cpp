@@ -15,18 +15,18 @@ Vector3::Vector3()
 	this->z = 0;
 }
 
-Vector3 Vector3::normalise()
+Vector3 Vector3::normalize(const Vector3& a)
 {
-	double myXsquared = this->x * this->x;
-	double myYsquared = this->y * this->y;
-	double myZsquared = this->z * this->z;
+	double myXsquared = a.x * a.x;
+	double myYsquared = a.y * a.y;
+	double myZsquared = a.z * a.z;
 
 	double betrag = sqrt(pow(sqrt(myXsquared + myYsquared), 2) + myZsquared);
 
 	Vector3 out = Vector3(0, 0, 0);
-		out.x = this->x / betrag;
-		out.y = this->y / betrag;
-		out.z = this->z / betrag;
+		out.x = a.x / betrag;
+		out.y = a.y / betrag;
+		out.z = a.z / betrag;
 
 	return out;
 }
@@ -52,4 +52,19 @@ void Vector3::subtract(Vector3 vec)
 	this->x -= vec.x;
 	this->y -= vec.y;
 	this->z -= vec.z;
+}
+
+Vector3 Vector3::cross(const Vector3& a, const Vector3& b)
+{
+	Vector3 result;
+	result.x = a.y * b.z - a.z * b.y;
+	result.y = a.z * b.x - a.x * b.z;
+	result.z = a.x * b.y - a.y * b.x;
+	return result;
+
+}
+
+double Vector3::dot(const Vector3& a, const Vector3& b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z;
 }

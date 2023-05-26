@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "matrix4x4.h"
 #include <cmath>
 
 double M_PI = 3.1415;
@@ -39,98 +40,41 @@ Vector3 Camera::getRotation() {
 	return this->rotation;
 }
 
-vector<Vector3> Camera::createRotationMatrix(Vector3 rotationAngles) {
-	double x = rotationAngles.x;
-	double y = rotationAngles.y;
-	double z = rotationAngles.z;
 
-	// Convert rotation angles to radians
-	double radX = MathFuns::degToRad(x);
-	double radY = MathFuns::degToRad(y);
-	double radZ = MathFuns::degToRad(z);
-
-	// Calculate sine and cosine values
-	double sinGam = sin(radX);
-	double cosGam = cos(radX);
-	double sinBet = sin(radY);
-	double cosBet = cos(radY);
-	double sinAlp = sin(radZ);
-	double cosAlp = cos(radZ);
-
-	// Create the rotation matrix
-	vector<Vector3> rotationMatrix;
-	rotationMatrix.push_back(Vector3(cosAlp * cosBet, cosAlp * sinBet * sinGam - sinAlp * cosGam, cosAlp * sinBet * cosGam + sinAlp * sinGam));
-	rotationMatrix.push_back(Vector3(sinAlp * cosBet, sinAlp * sinBet * sinGam + cosAlp * cosGam, sinAlp * sinBet * cosGam - cosAlp * sinGam));
-	rotationMatrix.push_back(Vector3(-sinBet, cosBet * sinGam, cosBet * cosGam));
-
-	return rotationMatrix;
-}
-
-Vector3 Camera::multiplyMatrixVector(const vector<Vector3>& matrix, const Vector3& vector) {
-	double x = vector.x;
-	double y = vector.y;
-	double z = vector.z;
-
-	double resultX = matrix[0].x * x + matrix[0].y * y + matrix[0].z * z;
-	double resultY = matrix[1].x * x + matrix[1].y * y + matrix[1].z * z;
-	double resultZ = matrix[2].x * x + matrix[2].y * y + matrix[2].z * z;
-
-	return Vector3(resultX, resultY, resultZ);
-}
 
 Vector2 Camera::renderPoint(Point point) {
-    Vector2 output;
 
-    Vector3 cameraPosition	= this->getPosition();
-    Vector3 cameraRotation	= this->getRotation();
-    Vector3 pointPosition	= point.getCoordinates();
+	Vector2 output;
 
-	float angle = MathFuns::radToDeg(atan2(pointPosition.y - cameraPosition.y, pointPosition.x - cameraPosition.x));
-	float fov = this->getFov();
-	float width = 960;
-	float height = 540;
-	float aspectRatio = width / height;
-	float far = this->getRenderDistance();
-	float near = 1;
+	Vector3 cameraPosition = this->getPosition();
+	Vector3 cameraRotation = this->getRotation();
+	Vector3 pointPosition = point.getCoordinates();
 
+	double	width = 960.0;
+	double	height = 540.0;
+	double	nearClipping = 10;
+	double	farClipping = this->getRenderDistance();
+	double	aspectRatio = width / height;
 
-	double  widthViewPlane	= tan(fovx) * nearClipping * 2;
-	double  heightViewPlane	= widthViewPlane * (9 / 16);
+	double  fovx = this->getFov();
+	double	fovy = 2.0 * atan(tan(fovx * 0.5) / aspectRatio);
 
-	if (angle < fov && angle > -fov && cameraSpacePoint.length() < far) {
+	double  widthViewPlane = tan(fovx) * nearClipping * 2;
+	double  heightViewPlane = tan(fovy) * nearClipping * 2;
 
-		// Create perspective projection matrix
-		float f = 1.0f / std::tan(fov / 2.0f);
+	Vector3 pointCamDelta;
+	pointCamDelta.x = pointPosition.x - cameraPosition.x;
+	pointCamDelta.y = pointPosition.y - cameraPosition.y;
+	pointCamDelta.z = pointPosition.z - cameraPosition.z;
 
-		float projMatrix[4][4] = {
-			{f / aspectRatio, 0, 0, 0},
-			{0, f, 0, 0},
-			{0, 0, (far + near) / (far - near), 2 * far * near / (far - near)},
-			{0, 0, 1, 0}
-		};
+	double  angleXY = MathFuns::radToDeg(atan2(pointCamDelta.y, pointCamDelta.x));
 
-		// Multiply the camera space point by the perspective projection matrix
-		float clipSpacePoint[4] = {
-			projMatrix[0][0] * cameraSpacePoint.x + projMatrix[0][1] * cameraSpacePoint.y + projMatrix[0][2] * cameraSpacePoint.z + projMatrix[0][3],
-			projMatrix[1][0] * cameraSpacePoint.x + projMatrix[1][1] * cameraSpacePoint.y + projMatrix[1][2] * cameraSpacePoint.z + projMatrix[1][3],
-			projMatrix[2][0] * cameraSpacePoint.x + projMatrix[2][1] * cameraSpacePoint.y + projMatrix[2][2] * cameraSpacePoint.z + projMatrix[2][3],
-			projMatrix[3][0] * cameraSpacePoint.x + projMatrix[3][1] * cameraSpacePoint.y + projMatrix[3][2] * cameraSpacePoint.z + projMatrix[3][3]
-		};
+	if (pointCamDelta.length() < farClipping && angleXY > -fovx && angleXY < fovx)
+	{
+		output.x = nearClipping / (pointCamDelta.x / pointCamDelta.y) * widthViewPlane;
+		output.y = nearClipping / (pointCamDelta.x / pointCamDelta.z) * heightViewPlane;
 
-		// Perform perspective division to obtain the normalized device coordinates (NDC)
-		Vector3 ndc = {
-			clipSpacePoint[0] / clipSpacePoint[3],
-			clipSpacePoint[1] / clipSpacePoint[3],
-			clipSpacePoint[2] / clipSpacePoint[3]
-		};
-
-		// Convert the NDC to screen coordinates
-		Vector2 screenPoint = {
-			((ndc.y + 1.0f) / 2.0f) * width + MathFuns::mapLinear(cameraRotation.x, 0, 360, 0, width),
-			((ndc.x + 1.0f) / 2.0f) * height + MathFuns::mapLinear(cameraRotation.y, 0, 360, 0, height)
-		};
-
-		return screenPoint;
+		return output;
 	}
 }
 

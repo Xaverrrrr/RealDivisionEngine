@@ -13,6 +13,7 @@
 #include "world.h"
 #include "vector3.h"
 #include "vector2.h"
+#include "matrix4x4.h"
 
 
 #define MAX_LOADSTRING 1000
@@ -37,8 +38,7 @@ Wall floor1 = Wall("floor");
 vector<vector<Vector2>> wallVertices;
 Point point = Point(10, 5, 10);
 Point point2 = Point(10, -5, 10);
-Point point3 = Point(10, 5, 0);
-Point point4 = Point(10, -5, 0);
+
 
 void initEntities() {
 
@@ -48,8 +48,6 @@ void initEntities() {
 
     wall.setCoordinates(Point(0, 0, 0), Point(0, 0, -10), Point(10, 10, -10), Point(10, 10, 0));
     floor1.setCoordinates(Point(0, 0, 0), Point(100, 0, 0), Point(100, 20, 0), Point(0, 20, 0));
-    //world.addWall(wall);
-    //world.addWall(floor1);
 }
 
 void CreateConsole()
@@ -227,16 +225,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         
                     SelectObject(hdc, hPen);
                         auto var = player.renderPoint(point);
-                        Ellipse(hdc, var.x - 2, var.y - 2, var.x + 2, var.y + 2);
+                        Ellipse(hdc, 480 + var.x - 2, 270 + var.y - 2, 480 + var.x + 2, 270 + var.y + 2);
 
                         auto var2 = player.renderPoint(point2);
-                        Ellipse(hdc, var2.x - 2, var2.y - 2, var2.x + 2, var2.y + 2);
+                        Ellipse(hdc, 480 + var2.x - 2, 270 + var2.y - 2, 480 + var2.x + 2,  270 + var2.y + 2);
                    
-                        auto var3 = player.renderPoint(point3);
-                        Ellipse(hdc, 480 + var3.x - 2, 270 + var3.y - 2, 480 + var3.x + 2, 270 + var3.y + 2);
-
-                        auto var4 = player.renderPoint(point4);
-                        Ellipse(hdc, 480 + var4.x - 2, 270 + var4.y - 2, 480 + var4.x + 2, 270 + var4.y + 2);
 
                         DeleteObject(hPen);
 

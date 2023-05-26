@@ -10,6 +10,7 @@
 #include "mathFuns.h"
 #include "vector3.h"
 #include "vector2.h"
+#include "vector4.h"
 
 
 class Camera: public Entity {
@@ -23,12 +24,8 @@ public:
 	Vector3 getRotation();
 	void updateRotation(double x, double y, double z);
 
-	vector<Vector3> createRotationMatrix(Vector3 rotationAngles);
-	Vector3 multiplyMatrixVector(const vector<Vector3>& matrix, const Vector3& vector);
-
 	Vector2 renderPoint(Point point);
 	vector<vector<Vector2>> renderWalls(vector<Wall> walls); //Returns a list of pairs (left and right side of wall) which themselfes contain a pair of both the x coordinate on the screen and the height of the line 
-
 	void setRenderDistance(int x);
 	int getRenderDistance();
 
