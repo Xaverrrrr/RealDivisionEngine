@@ -3,17 +3,16 @@
 
 #include <vector>
 #include <iostream>
+#include "vector3.h"
 class Matrix4x4
 {
 public:
 
-	Matrix4x4 addMatrices(Matrix4x4 a, Matrix4x4 b);
-	void setElements(std::vector<double> x);
+	static Matrix4x4 addMatrices(Matrix4x4 a, Matrix4x4 b);
+	static Vector3 multPointMatrix(const Vector3 in, const Matrix4x4 M);
+	Matrix4x4();
 
-	double x1, x2, x3, x4;
-	double y1, y2, y3, y4;
-	double z1, z2, z3, z4;
-	double w1, w2, w3, w4;
+	double M[4][4];
 };
 
 #endif 

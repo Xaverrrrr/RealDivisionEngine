@@ -43,54 +43,80 @@ Vector3 Camera::getRotation() {
 
 
 Vector2 Camera::renderPoint(Point point) {
+    Vector2 output;
+    Vector3 cameraPosition = this->getPosition();
+    Vector3 pointPosition = point.getCoordinates();
 
-	Vector2 output;
 
-	Vector3 cameraPosition = this->getPosition();
-	Vector3 cameraRotation = this->getRotation();
-	Vector3 pointPosition = point.getCoordinates();
+    double width = 960.0;
+    double height = 540.0;
+    double near = 0.1;
+    double far = this->getRenderDistance();
+    double aspectRatio = width / height;
+    double fov = this->getFov();
+    double f = 1 / tan(MathFuns::degToRad(fov / 2));
+    double angleXY = MathFuns::radToDeg(atan2(pointPosition.y - cameraPosition.y, pointPosition.x - cameraPosition.x));
 
-	double	width = 960.0;
-	double	height = 540.0;
-	double	nearClipping = 10;
-	double	farClipping = this->getRenderDistance();
-	double	aspectRatio = width / height;
+    // Apply camera rotation
+    Vector3 cameraRotation = this->getRotation(); // Assuming getRotation() returns Euler rotations in degrees
+    double angleXRad = MathFuns::degToRad(cameraRotation.x);
+    double angleYRad = MathFuns::degToRad(cameraRotation.y);
+    double angleZRad = MathFuns::degToRad(cameraRotation.z);
+    double cosX = cos(angleXRad);
+    double sinX = sin(angleXRad);
+    double cosY = cos(angleYRad);
+    double sinY = sin(angleYRad);
+    double cosZ = cos(angleZRad);
+    double sinZ = sin(angleZRad);
 
-	double  fovx = this->getFov();
-	double	fovy = 2.0 * atan(tan(fovx * 0.5) / aspectRatio);
+    // Apply inverse camera rotation to object's position
+    Vector3 rotatedObjectPosition;
+    rotatedObjectPosition.x = (pointPosition.x - cameraPosition.x) * (cosY * cosZ) + (pointPosition.y - cameraPosition.y) * (cosX * sinZ + sinX * sinY * cosZ) + (pointPosition.z - cameraPosition.z) * (sinX * sinZ - cosX * sinY * cosZ);
+    rotatedObjectPosition.y = (pointPosition.x - cameraPosition.x) * (-cosY * sinZ) + (pointPosition.y - cameraPosition.y) * (cosX * cosZ - sinX * sinY * sinZ) + (pointPosition.z - cameraPosition.z) * (sinX * cosZ + cosX * sinY * sinZ);
+    rotatedObjectPosition.z = (pointPosition.x - cameraPosition.x) * (sinY)+(pointPosition.y - cameraPosition.y) * (-sinX * cosY) + (pointPosition.z - cameraPosition.z) * (cosX * cosY);
 
-	double  widthViewPlane = tan(fovx) * nearClipping * 2;
-	double  heightViewPlane = tan(fovy) * nearClipping * 2;
+    Vector3 positionDelta;
+    positionDelta.x = -rotatedObjectPosition.y; // Left-handed system
+    positionDelta.y = rotatedObjectPosition.z - cameraPosition.z;
+    positionDelta.z = rotatedObjectPosition.x - cameraPosition.x;
 
-	Vector3 pointCamDelta;
-	pointCamDelta.x = pointPosition.x - cameraPosition.x;
-	pointCamDelta.y = pointPosition.y - cameraPosition.y;
-	pointCamDelta.z = pointPosition.z - cameraPosition.z;
+    if (positionDelta.length() < far && angleXY > -fov && angleXY < fov) {
+        Matrix4x4 perspectiveProjectionMatrix;
 
-	double  angleXY = MathFuns::radToDeg(atan2(pointCamDelta.y, pointCamDelta.x));
+        perspectiveProjectionMatrix.M[0][0] = f / aspectRatio;
+        perspectiveProjectionMatrix.M[1][1] = f;
+        perspectiveProjectionMatrix.M[2][2] = (far + near) / (near - far);
+        perspectiveProjectionMatrix.M[3][2] = (2 * far * near) / (near - far);
+        perspectiveProjectionMatrix.M[2][3] = -1;
 
-	if (pointCamDelta.length() < farClipping && angleXY > -fovx && angleXY < fovx)
-	{
-		output.x = nearClipping / (pointCamDelta.x / pointCamDelta.y) * widthViewPlane;
-		output.y = nearClipping / (pointCamDelta.x / pointCamDelta.z) * heightViewPlane;
+        Vector3 projectedPoint = Matrix4x4::multPointMatrix(positionDelta, perspectiveProjectionMatrix);
 
-		return output;
-	}
+        // Map projected point to the screen
+        output.x = (projectedPoint.x + 1) * (width / 2);
+        output.y = (1 - projectedPoint.y) * (height / 2);
+
+        // Convert to pixel coordinates
+        output.x = round(output.x);
+        output.y = round(output.y);
+
+        return output;
+    }
+    return Vector2(NULL, NULL);
 }
+
 
 vector<vector<Vector2>> Camera::renderWalls(vector<Wall> walls) {
 
 	vector<vector<Vector2>> output;
 
-	//for (Wall var : walls)
-	//{
-	//	Vector2 coordinatesOnScreen;
-	//	for (Point point : var.getCoordinates()) {
-	//		coordinatesOnScreen = this->renderPoints(point);
-	//		output.push_back({ coordinatesOnScreen });
-	//	}
-	//		
-	//}
+	for (Wall var : walls)
+	{
+		Vector2 coordinatesOnScreen;
+		for (Point point : var.getCoordinates()) {
+			coordinatesOnScreen = this->renderPoint(point);
+			output.push_back({ coordinatesOnScreen });
+		}
+	}
 
 	return output;
 }

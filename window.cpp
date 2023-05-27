@@ -33,9 +33,7 @@ int height = 540;
 
 Camera player =  Camera("PlayerCam1");
 World world =  World("World");
-Wall wall = Wall("wall");
-Wall floor1 = Wall("floor");
-vector<vector<Vector2>> wallVertices;
+
 Point point = Point(10, 5, 10);
 Point point2 = Point(10, -5, 10);
 
@@ -44,10 +42,8 @@ void initEntities() {
 
     player.setPosition({ 0, 0, 0 });
     player.setRenderDistance(1000);
-    player.setFov(70);
+    player.setFov(50);
 
-    wall.setCoordinates(Point(0, 0, 0), Point(0, 0, -10), Point(10, 10, -10), Point(10, 10, 0));
-    floor1.setCoordinates(Point(0, 0, 0), Point(100, 0, 0), Point(100, 20, 0), Point(0, 20, 0));
 }
 
 void CreateConsole()
@@ -80,9 +76,6 @@ void CreateConsole()
     std::wcin.clear();
 }
 
-void renderScreen() {
-    wallVertices = player.renderWalls(world.getWalls());
-}
 
 void toggleCursor(LPARAM lParam, HWND hWnd) {
     RECT rect;
@@ -106,12 +99,12 @@ void toggleCursor(LPARAM lParam, HWND hWnd) {
     rect.bottom = lr.y;
 
     if (CursorIsVisible) {
-        //ShowCursor(false);
+        ShowCursor(false);
         ClipCursor(&rect);
         CursorIsVisible = false;
     }
     else {
-        //ShowCursor(true);
+        ShowCursor(true);
         ClipCursor(NULL);
         CursorIsVisible = true;
     }
@@ -149,10 +142,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         *RENDERING HAPPENS HERE*
         ************************/
         player.updatePosition();               //Add velocity onto position
-        thread renderThread(&renderScreen);
+        //thread renderThread(&renderScreen);
         Sleep(2);                               //Delay makes animation smoother
         InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear 
-        renderThread.join();
+        //renderThread.join();
     }
 
     return (int) msg.wParam;
@@ -217,6 +210,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
                     HPEN crosshairPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
+
                     SelectObject(hdc, crosshairPen);
                     Ellipse(hdc, width / 2 - 2, height / 2 - 2, width / 2 + 2, height / 2 + 2);
                     
@@ -224,12 +218,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         /*Draw Crosshair*/
                         
                     SelectObject(hdc, hPen);
-                        auto var = player.renderPoint(point);
-                        Ellipse(hdc, 480 + var.x - 2, 270 + var.y - 2, 480 + var.x + 2, 270 + var.y + 2);
+                        //auto var = player.renderPoint(point);
+                        //Ellipse(hdc, var.x - 2, var.y - 2, var.x + 2, var.y + 2);
 
-                        auto var2 = player.renderPoint(point2);
-                        Ellipse(hdc, 480 + var2.x - 2, 270 + var2.y - 2, 480 + var2.x + 2,  270 + var2.y + 2);
-                   
+                        //auto var2 = player.renderPoint(point2);
+                        //Ellipse(hdc, var2.x - 2, var2.y - 2, var2.x + 2,  var2.y + 2);
+
+                        auto walls = player.renderWalls(
+                            { 
+                                Wall("testwall", {Point(0,0,0), Point(0,5,0), Point(5,5,0), Point(5,0,0)}),
+                                Wall("testwall1", {Point(0,0,5), Point(0,5,5), Point(5,5,5), Point(5,0,5)}),
+                            });
+                        for(vector<Vector2> wall : walls) {
+                            for (Vector2 vec : wall) {
+                                Ellipse(hdc, vec.x - 2, vec.y - 2, vec.x + 2, vec.y + 2);
+                            }
+                        }
 
                         DeleteObject(hPen);
 
@@ -237,50 +241,57 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 EndPaint(hWnd, &ps);
             }
         break;
-
         case WM_KEYDOWN:
-                if (GetAsyncKeyState((int)'W') < 0)
-                {
-                    player.setVelocity({ 1, 0.0, 0.0 });
-                }
-                if (GetAsyncKeyState((int)'A') < 0)
-                {
-                    player.setVelocity({ 0.0, -1, 0.0 });
-                }
-                if (GetAsyncKeyState((int)'S') < 0)
-                {
-                    player.setVelocity({ -1, 0.0, 0.0 });
-                }
-                if (GetAsyncKeyState((int)'D') < 0)
-                {
-                    player.setVelocity({ 0.0, 1, 0.0 });
-                }
+        {
+            bool wKey = GetAsyncKeyState((int)'W') & 0x8000;
+            bool aKey = GetAsyncKeyState((int)'A') & 0x8000;
+            bool sKey = GetAsyncKeyState((int)'S') & 0x8000;
+            bool dKey = GetAsyncKeyState((int)'D') & 0x8000;
 
-                if (GetAsyncKeyState(VK_ESCAPE) < 0)
-                {
-                    toggleCursor(lParam, hWnd);
-                }
+            if (wKey)
+            {
+                player.setVelocity(Vector3(1, player.getVelocity().y, player.getVelocity().z));
+            }
+            if (sKey)
+            {
+                player.setVelocity(Vector3(-1, player.getVelocity().y, player.getVelocity().z));
+            }
+
+            if (aKey)
+            {
+                player.setVelocity(Vector3(player.getVelocity().x, -1, player.getVelocity().z));
+            }
+            if (dKey)
+            {
+                player.setVelocity(Vector3(player.getVelocity().x, 1, player.getVelocity().z));
+            }
+
+            if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+            {
+                toggleCursor(lParam, hWnd);
+            }
+        }
         break;
 
         case WM_KEYUP:
-                if (GetAsyncKeyState((int)'W') == 0)
-                {
-                    player.setVelocity({ 0.0, 0.0, 0.0 });
-                }
-                if (!GetAsyncKeyState((int)'A') == 0)
-                {
-                    player.setVelocity({ 0.0, 0.0, 0.0 });
-                }
-                if (!GetAsyncKeyState((int)'S') == 0)
-                {
-                    player.setVelocity({ 0.0, 0.0, 0.0 });
-                }
-                if (!GetAsyncKeyState((int)'D') == 0)
-                {
-                    player.setVelocity({ 0.0, 0.0, 0.0 });
-                }
+        {
+            bool wKey = GetAsyncKeyState((int)'W') & 0x8000;
+            bool aKey = GetAsyncKeyState((int)'A') & 0x8000;
+            bool sKey = GetAsyncKeyState((int)'S') & 0x8000;
+            bool dKey = GetAsyncKeyState((int)'D') & 0x8000;
 
+            if (!wKey && !sKey)
+            {
+                player.setVelocity(Vector3(0.0, player.getVelocity().y, player.getVelocity().z));
+            }
+
+            if (!aKey && !dKey)
+            {
+                player.setVelocity(Vector3(player.getVelocity().x, 0.0, player.getVelocity().z));
+            }
+        }
         break;
+
 
         case WM_SETFOCUS:
             toggleCursor(lParam, hWnd);
@@ -300,13 +311,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             double mappedDeltaX, mappedDeltaY;
 
-            mappedDeltaX = MathFuns::mapLinear(pt.x, 0, width, -1, 1);
+            mappedDeltaX = MathFuns::mapLinear(pt.x, 0, width, 1, -1);
             mappedDeltaY = MathFuns::mapLinear(pt.y, 0, height, -1, 1);
 
 
             if (!CursorIsVisible) {
                 SetCursorPos(center.x, center.y);
-                player.updateRotation(mappedDeltaX * 5, mappedDeltaY * 5, 0);
+                player.updateRotation(0, mappedDeltaY * 5, mappedDeltaX * 5);
             }
 
             break;
