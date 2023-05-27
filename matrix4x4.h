@@ -10,6 +10,7 @@ public:
 
 	static Matrix4x4 addMatrices(Matrix4x4 a, Matrix4x4 b);
 	static Vector3 multPointMatrix(const Vector3 in, const Matrix4x4 M);
+	static Matrix4x4 multiplyMatrices(const Matrix4x4& matrixA, const Matrix4x4& matrixB);
 	Matrix4x4();
 
 	double M[4][4];

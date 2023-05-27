@@ -221,9 +221,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         //auto var = player.renderPoint(point);
                         //Ellipse(hdc, var.x - 2, var.y - 2, var.x + 2, var.y + 2);
 
-                        //auto var2 = player.renderPoint(point2);
-                        //Ellipse(hdc, var2.x - 2, var2.y - 2, var2.x + 2,  var2.y + 2);
-
                         auto walls = player.renderWalls(
                             { 
                                 Wall("testwall", {Point(0,0,0), Point(0,5,0), Point(5,5,0), Point(5,0,0)}),

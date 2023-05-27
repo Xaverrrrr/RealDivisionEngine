@@ -70,3 +70,21 @@ Vector3 Matrix4x4::multPointMatrix(const Vector3 in, const Matrix4x4 M)
 
 	return out;
 }
+
+Matrix4x4 Matrix4x4::multiplyMatrices(const Matrix4x4& matrixA, const Matrix4x4& matrixB) {
+	Matrix4x4 result;
+
+	for (int row = 0; row < 4; row++) {
+		for (int col = 0; col < 4; col++) {
+			double sum = 0.0;
+
+			for (int k = 0; k < 4; k++) {
+				sum += matrixA.M[row][k] * matrixB.M[k][col];
+			}
+
+			result.M[row][col] = sum;
+		}
+	}
+
+	return result;
+}
