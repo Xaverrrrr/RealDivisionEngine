@@ -42,7 +42,7 @@ void initEntities() {
 
     player.setPosition({ 0, 0, 0 });
     player.setRenderDistance(1000);
-    player.setFov(50);
+    player.setFov(70);
 
 }
 
@@ -130,7 +130,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     MSG msg;
 
     bool running = true;
-
+    world.importFile();
     while (running) {
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
@@ -142,10 +142,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         *RENDERING HAPPENS HERE*
         ************************/
         player.updatePosition();               //Add velocity onto position
-        //thread renderThread(&renderScreen);
         Sleep(2);                               //Delay makes animation smoother
         InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear 
-        //renderThread.join();
     }
 
     return (int) msg.wParam;
@@ -177,7 +175,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    
    MoveWindow(hWnd, 100, 100, width, height + 40, TRUE); //+40 for menu bar
-   SetWindowText(hWnd, "Boom");
+   SetWindowTextA(hWnd, "RealDivisionEngine");
    SetMenu(hWnd, NULL);
    ShowWindow(hWnd, nCmdShow);
 
@@ -263,10 +261,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 player.setVelocity(Vector3(player.getVelocity().x, 1, player.getVelocity().z));
             }
 
-            if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
-            {
-                toggleCursor(lParam, hWnd);
-            }
+            //if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+            //{
+            //    toggleCursor(lParam, hWnd);
+            //}
         }
         break;
 
@@ -288,11 +286,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
-
-
-        case WM_SETFOCUS:
-            toggleCursor(lParam, hWnd);
-            break;
 
         case WM_MOUSEMOVE:
 

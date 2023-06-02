@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "vector3.h"
+#include "point.h"
 
 using namespace std;
 
@@ -12,6 +13,7 @@ class Entity
 	public:
 
 		Entity(string name);
+		Entity(string name, Vector3 position);
 
 		void			setPosition(Vector3 myPosition);
 		Vector3			getPosition();

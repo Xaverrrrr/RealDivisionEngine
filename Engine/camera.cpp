@@ -55,7 +55,7 @@ Vector2 Camera::renderPoint(Point point) {
     double aspectRatio = width / height;
     double fov = this->getFov();
     double f = 1 / tan(MathFuns::degToRad(fov / 2));
-    double angleXY = MathFuns::radToDeg(atan2(pointPosition.y - cameraPosition.y, pointPosition.x - cameraPosition.x));
+    double angleXY = MathFuns::radToDeg(atan((pointPosition.y - cameraPosition.y) / (pointPosition.x - cameraPosition.x)));
 
     // Apply camera rotation
     Vector3 cameraRotation = this->getRotation(); // Assuming getRotation() returns Euler rotations in degrees

@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <windows.h>
+#include <fstream>
+#include <sstream>
 
 #include "entity.h"
 #include "wall.h"
@@ -26,6 +29,9 @@ class World
 		void setMeasurements(vector<double>);
 		vector<double> getMeasurements();
 
+		bool importFile();
+		
+
 
 	private:
 		string name;
@@ -33,6 +39,7 @@ class World
 		vector<Entity> entityList;
 		vector<Wall> wallList;
 
+		std::vector<std::string> splitString(const std::string& input, char delimiter);
 };
 
 

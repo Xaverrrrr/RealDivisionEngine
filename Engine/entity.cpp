@@ -5,6 +5,12 @@ Entity::Entity(string name) {
 	this->name = name;
 }
 
+Entity::Entity(string name, Vector3 position)
+{
+	this->name = name;
+	this->setPosition(position);
+}
+
 void Entity::setPosition(Vector3 myPosition) {
 	this->position = myPosition;
 }
