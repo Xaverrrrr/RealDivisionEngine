@@ -3,6 +3,10 @@
 #include "MapBuilder.h"
 #include <vector>
 
+#include "../../Engine/vector3.h"
+#include "../../Engine/point.h"
+#include "../../Engine/wall.h"
+#include "../../Engine/mathfuns.h"
 
 #define MAX_LOADSTRING 1000
 
@@ -16,6 +20,8 @@ BOOL InitInstance(HINSTANCE, int);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 vector<POINT> pointList;
+vector<Wall> WallList;
+bool wallSelected = true;
 
 void CreateConsole()
 {
@@ -72,7 +78,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-            Sleep(2);
+            Sleep(10);
             InvalidateRect(msg.hwnd, NULL, TRUE);
         }
     }
@@ -92,7 +98,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.cbWndExtra = 0;
     wcex.hInstance = hInstance;
     wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MAPBUILDER));
-    wcex.hCursor = NULL;
+    wcex.hCursor = LoadCursor(NULL, IDC_CROSS);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_MAPBUILDER);
     wcex.lpszClassName = szWindowClass;
@@ -137,26 +143,72 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
 
-        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+        HPEN hPenBlack = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+        HPEN hPenRed = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
         COLORREF grey = RGB(150, 150, 150);
         HBRUSH hBrushGrey = CreateSolidBrush(grey);
 
-        SelectObject(hdc, hPen);
+        POINT pt;
+        GetCursorPos(&pt);
+        ScreenToClient(hWnd, &pt);
 
-        for(int i = 0; i < pointList.size(); i++) {
-            Ellipse(hdc, pointList[i].x - 2, pointList[i].y - 2, pointList[i].x + 2, pointList[i].y + 2);
-            if (i % 2 == 1 && pointList.size() > 1) {
-                MoveToEx(hdc, pointList[i].x, pointList[i].y, 0);
-                LineTo(hdc, pointList[i - 1].x, pointList[i - 1].y);
+
+        if (pointList.size() > 0)
+        {
+            SelectObject(hdc, hPenRed);
+            for (int i = 0; i < pointList.size(); i++) {
+                Ellipse(hdc, pointList[i].x - 2, pointList[i].y - 2, pointList[i].x + 2, pointList[i].y + 2);
             }
+            SelectObject(hdc, hPenBlack);
+            if (pointList.size() % 2 == 0 && pointList.size() > 1) {
+                for (int i = 0; i < pointList.size(); i += 2) {
+                    MoveToEx(hdc, pointList[i].x, pointList[i].y, 0);
+                    LineTo(hdc, pointList[i + 1].x, pointList[i + 1].y);
+                }
+            }
+            else {
+                MoveToEx(hdc, pt.x, pt.y, 0);
+                LineTo(hdc, pointList[pointList.size() - 1].x, pointList[pointList.size() - 1].y);
+                for (int i = 0; i < pointList.size() - 1; i += 2) {
+                    MoveToEx(hdc, pointList[i].x, pointList[i].y, 0);
+                    LineTo(hdc, pointList[i + 1].x, pointList[i + 1].y);
+                }
+            }
+
         }
 
-        RECT Button = { 0, 0, 100, 20 };
-        Rectangle(hdc, 0, 0, 100, 20);
-        FillRect(hdc, &Button, hBrushGrey);
-        DrawText(hdc, L"Press to save", -1, &Button, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+        RECT SaveButton = { 0 + 1, 0 + 1, 100 - 1, 20 - 1 };
+        Rectangle(hdc, SaveButton.left - 1, SaveButton.top - 1, SaveButton.right + 1, SaveButton.bottom + 1);
+        FillRect(hdc, &SaveButton, hBrushGrey);
 
-        DeleteObject(hPen);
+        RECT changeToEntity = { 0 + 1, 20 + 1, 100 - 1, 40 - 1 };
+        Rectangle(hdc, changeToEntity.left - 1, changeToEntity.top - 1, changeToEntity.right + 1, changeToEntity.bottom + 1);
+        FillRect(hdc, &changeToEntity, hBrushGrey);
+
+        RECT changeToWall = { 0 + 1, 40 + 1, 100 - 1, 60 - 1 };
+        Rectangle(hdc, changeToWall.left - 1, changeToWall.top - 1, changeToWall.right + 1, changeToWall.bottom + 1);
+        FillRect(hdc, &changeToWall, hBrushGrey);
+
+        SetBkMode(hdc, TRANSPARENT);
+
+        
+        SetTextColor(hdc, RGB(255, 0, 0));
+        if (wallSelected) {
+            DrawText(hdc, L"Place Wall", -1, &changeToWall, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            SetTextColor(hdc, RGB(0, 0, 0));
+            DrawText(hdc, L"Place Entity", -1, &changeToEntity, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            DrawText(hdc, L"Save World", -1, &SaveButton, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+        }
+        else {
+            DrawText(hdc, L"Place Entity", -1, &changeToEntity, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            SetTextColor(hdc, RGB(0, 0, 0));
+            DrawText(hdc, L"Place Wall", -1, &changeToWall, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            DrawText(hdc, L"Save World", -1, &SaveButton, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+        }
+
+
+        DeleteObject(hPenRed);
+        DeleteObject(hPenBlack);
         DeleteObject(hBrushGrey);
         EndPaint(hWnd, &ps);
     }
@@ -165,14 +217,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         // Convert the coordinates to client area coordinates
         POINT pt;
+        GetCursorPos(&pt);
+        ScreenToClient(hWnd, &pt);
+        cout << pt.x << " - " << pt.y << endl;
+        if (pt.x > 100 || pt.y > 60) {
+            pointList.push_back(pt);
+        }
+        else {
+            SetCursor(LoadCursor(NULL, IDC_HAND));
+            if (pt.y > 0 && pt.y < 20) {
+                cout << "SaveWorld" << endl;
+            }
+            if (pt.y > 20 && pt.y < 40) {
+                cout << "Entity" << endl;
+                wallSelected = false;
+            }
+            if (pt.y > 40 && pt.y < 60) {
+                cout << "Wall" << endl;
+                wallSelected = true;
+            }
+        }
+    }
+    break;
+
+    case WM_MOUSEMOVE:
+    {
+        // Convert the coordinates to client area coordinates
+        POINT pt;
 
         GetCursorPos(&pt);
         ScreenToClient(hWnd, &pt);
-        pointList.push_back(pt);
-
-        std::cout << pt.x << " - - " << pt.y << std::endl;
+        if (pt.x <= 100 && pt.y <= 60) {
+            SetCursor(LoadCursor(NULL, IDC_HAND));
+        }
     }
     break;
+
     case WM_DESTROY:
         FreeConsole();
         PostQuitMessage(0);
