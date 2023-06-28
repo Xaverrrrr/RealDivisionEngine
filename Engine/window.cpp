@@ -76,7 +76,6 @@ void CreateConsole()
     std::wcin.clear();
 }
 
-
 void toggleCursor(LPARAM lParam, HWND hWnd) {
     RECT rect;
     GetClientRect(hWnd, &rect);
@@ -209,28 +208,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
                     HPEN crosshairPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
 
-                    SelectObject(hdc, crosshairPen);
-                    Ellipse(hdc, width / 2 - 2, height / 2 - 2, width / 2 + 2, height / 2 + 2);
-                    
+                    HDC hdcBuffer = CreateCompatibleDC(hdc);
+                    HBITMAP hBitmap = CreateCompatibleBitmap(hdc, 960, 540);
+                    HBITMAP hOldBitmap = (HBITMAP)SelectObject(hdcBuffer, hBitmap);
 
-                        /*Draw Crosshair*/
+                    // Set the background color to white
+                    HBRUSH hBrushBackground = CreateSolidBrush(RGB(255, 255, 255));
+                    FillRect(hdcBuffer, &ps.rcPaint, hBrushBackground);
+                    DeleteObject(hBrushBackground);
+
+                    SelectObject(hdcBuffer, crosshairPen);
+                    Ellipse(hdcBuffer, width / 2 - 2, height / 2 - 2, width / 2 + 2, height / 2 + 2);
                         
-                    SelectObject(hdc, hPen);
-                        //auto var = player.renderPoint(point);
-                        //Ellipse(hdc, var.x - 2, var.y - 2, var.x + 2, var.y + 2);
+                    SelectObject(hdcBuffer, hPen);
 
                         auto walls = player.renderWalls(
                             { 
                                 Wall("testwall", {Point(0,0,0), Point(0,5,0), Point(5,5,0), Point(5,0,0)}),
                                 Wall("testwall1", {Point(0,0,5), Point(0,5,5), Point(5,5,5), Point(5,0,5)}),
                             });
-                        for(vector<Vector2> wall : walls) {
-                            for (Vector2 vec : wall) {
-                                Ellipse(hdc, vec.x - 2, vec.y - 2, vec.x + 2, vec.y + 2);
+                            for(vector<Vector2> wall : walls) {
+                                for (Vector2 vec : wall) {
+                                    Ellipse(hdcBuffer, vec.x - 2, vec.y - 2, vec.x + 2, vec.y + 2);
+                                }
                             }
-                        }
 
                         DeleteObject(hPen);
+                        BitBlt(hdc, 0, 0, 960, 540, hdcBuffer, 0, 0, SRCCOPY);
+
+                        SelectObject(hdcBuffer, hOldBitmap);
+                        DeleteObject(hBitmap);
+                        DeleteDC(hdcBuffer);
+
 
 
                 EndPaint(hWnd, &ps);
@@ -316,6 +325,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
             std::_Exit(EXIT_SUCCESS);
         break;
+        case WM_ERASEBKGND:
+            return TRUE;
 
         default:
             UpdateWindow(hWnd);

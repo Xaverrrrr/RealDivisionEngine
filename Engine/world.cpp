@@ -94,9 +94,7 @@ bool World::importFile()
 				}
 				else if (attributes.at(0) == "E") // Entity
 				{
-					vector<vector<string>> coords;
-					coords.push_back(splitString(attributes.at(1), ','));
-					addEntity(Entity("Entity", Vector3(stod(coords.at(0).at(0)), stod(coords.at(0).at(1)), stod(coords.at(0).at(2)))));
+					//
 				}
 			}
 		}

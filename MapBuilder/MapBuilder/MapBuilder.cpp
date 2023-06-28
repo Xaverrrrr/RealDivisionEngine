@@ -1,11 +1,14 @@
-#include "framework.h"
-#include "iostream"
-#include "MapBuilder.h"
+#include <iostream>
+#include <windows.h>
 #include <vector>
+#include <fstream>
+#include <sstream>
+#include <commdlg.h>
 
+#include "framework.h"
+#include "MapBuilder.h"
 #include "../../Engine/vector3.h"
 #include "../../Engine/point.h"
-#include "../../Engine/wall.h"
 #include "../../Engine/mathfuns.h"
 
 #define MAX_LOADSTRING 1000
@@ -19,9 +22,106 @@ ATOM MyRegisterClass(HINSTANCE hInstance);
 BOOL InitInstance(HINSTANCE, int);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-vector<POINT> pointList;
-vector<Wall> WallList;
+vector<POINT> wallPointList;
+vector<POINT> entityPointList;
+string entityList;
 bool wallSelected = true;
+
+string importFile()
+{
+    OPENFILENAME ofn;					// common dialog box structure
+    TCHAR szFile[260] = { 0 };			// if using TCHAR macros
+
+    // Initialize OPENFILENAME
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = TEXT("Object files (*.obj)\0*.obj\0All Files (*.*)\0*.*\0");
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.lpstrTitle = TEXT("Select your object");
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    if (GetOpenFileName(&ofn)) {
+        wstring filePath = ofn.lpstrFile;
+
+        // Read the contents of the file
+        ifstream file(filePath);
+        if (file) {
+            ostringstream oss;
+            oss << file.rdbuf();
+            string fileContent = oss.str();
+            file.close();
+            return fileContent;
+        }
+    }
+    return "";
+}
+
+void saveWorld() {
+    if (wallPointList.size() % 2 != 0) return;
+    string out = entityList;
+    for (int i = 0; i < wallPointList.size(); i+=2) {
+        out.append("W{{" + to_string(wallPointList.at(i).x) + "," + to_string(wallPointList.at(i).y) + "}{" + to_string(wallPointList.at(i + 1).x) + "," + to_string(wallPointList.at(i + 1).y) + "}};\n");
+    }
+
+    OPENFILENAME ofn;
+    TCHAR fileName[MAX_PATH] = { 0 };
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFilter = TEXT("Real Division Engine World (*.rdew)\0*.txt\0All Files (*.*)\0*.*\0");
+    ofn.lpstrFile = fileName;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrTitle = TEXT("Save File");
+    ofn.Flags = OFN_OVERWRITEPROMPT;
+
+    if (GetSaveFileName(&ofn) == TRUE) {
+        std::ofstream file(fileName);
+
+        if (file.is_open()) {
+            file << out;
+            file.close();
+        }
+    }
+}
+
+void saveObjFile(string file, POINT pt) {
+    vector<string> lines;
+    vector<vector<string>> coords;
+
+    string token;
+    stringstream ss(file);
+
+    while (getline(ss, token, '\n')) {
+        if (!token.empty() && token[0] == 'v' && token.size() > 1 && token[1] == ' ') {
+            token = token.erase(0, token.find_first_not_of(" \n\r\t\f\v"));
+            token = token.erase(token.find_last_not_of(" \n\r\t\f\v") + 1);
+            lines.push_back(token.erase(0, 2));
+        }
+    }
+
+    for (string s : lines) {
+        vector<string> temp;
+        stringstream ss(s);
+        while (getline(ss, token, ' ')) {
+            cout << token << endl;
+            temp.push_back(token);
+
+        }
+        coords.push_back(temp);
+    }
+    string out = "E{" + to_string(pt.x) + "," + to_string(pt.y) + "}{";
+    for (vector<string> vec : coords) { out.append("{" + vec.at(0) + "," + vec.at(1) + "," + vec.at(2) + "}"); }
+    out.append("};\n");
+    
+    entityList.append(out);
+}
 
 void CreateConsole()
 {
@@ -74,13 +174,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     bool running = true;
     while (running) {
+
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
-            Sleep(10);
-            InvalidateRect(msg.hwnd, NULL, TRUE);
+            DispatchMessage(&msg); 
         }
+        Sleep(2);
+        InvalidateRect(msg.hwnd, NULL, TRUE);
     }
 
     return (int)msg.wParam;
@@ -124,6 +225,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
@@ -137,6 +239,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
     }
     break;
+
 
     case WM_PAINT:
     {
@@ -152,64 +255,86 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         GetCursorPos(&pt);
         ScreenToClient(hWnd, &pt);
 
+        HDC hdcBuffer = CreateCompatibleDC(hdc);
+        HBITMAP hBitmap = CreateCompatibleBitmap(hdc, 960, 540);
+        HBITMAP hOldBitmap = (HBITMAP)SelectObject(hdcBuffer, hBitmap);
 
-        if (pointList.size() > 0)
+        // Set the background color to white
+        HBRUSH hBrushBackground = CreateSolidBrush(RGB(255, 255, 255));
+        FillRect(hdcBuffer, &ps.rcPaint, hBrushBackground);
+        DeleteObject(hBrushBackground);
+
+
+        if (wallPointList.size() > 0)
         {
-            SelectObject(hdc, hPenRed);
-            for (int i = 0; i < pointList.size(); i++) {
-                Ellipse(hdc, pointList[i].x - 2, pointList[i].y - 2, pointList[i].x + 2, pointList[i].y + 2);
+            SelectObject(hdcBuffer, hPenRed);
+            for (int i = 0; i < wallPointList.size(); i++) {
+                Ellipse(hdcBuffer, wallPointList[i].x - 2, wallPointList[i].y - 2, wallPointList[i].x + 2, wallPointList[i].y + 2);
             }
-            SelectObject(hdc, hPenBlack);
-            if (pointList.size() % 2 == 0 && pointList.size() > 1) {
-                for (int i = 0; i < pointList.size(); i += 2) {
-                    MoveToEx(hdc, pointList[i].x, pointList[i].y, 0);
-                    LineTo(hdc, pointList[i + 1].x, pointList[i + 1].y);
+            SelectObject(hdcBuffer, hPenBlack);
+            if (wallPointList.size() % 2 == 0 && wallPointList.size() > 1) {
+                for (int i = 0; i < wallPointList.size(); i += 2) {
+                    MoveToEx(hdcBuffer, wallPointList[i].x, wallPointList[i].y, 0);
+                    LineTo(hdcBuffer, wallPointList[i + 1].x, wallPointList[i + 1].y);
                 }
             }
             else {
-                MoveToEx(hdc, pt.x, pt.y, 0);
-                LineTo(hdc, pointList[pointList.size() - 1].x, pointList[pointList.size() - 1].y);
-                for (int i = 0; i < pointList.size() - 1; i += 2) {
-                    MoveToEx(hdc, pointList[i].x, pointList[i].y, 0);
-                    LineTo(hdc, pointList[i + 1].x, pointList[i + 1].y);
+                if (wallSelected) {
+                    MoveToEx(hdcBuffer, pt.x, pt.y, 0);
+                    LineTo(hdcBuffer, wallPointList[wallPointList.size() - 1].x, wallPointList[wallPointList.size() - 1].y);
+                }
+                for (int i = 0; i < wallPointList.size() - 1; i += 2) {
+                    MoveToEx(hdcBuffer, wallPointList[i].x, wallPointList[i].y, 0);
+                    LineTo(hdcBuffer, wallPointList[i + 1].x, wallPointList[i + 1].y);
                 }
             }
-
         }
+
+        if (entityPointList.size() > 0) {
+            HPEN blue = CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
+            SelectObject(hdcBuffer, blue);
+            for(POINT var : entityPointList)
+            {
+                Ellipse(hdcBuffer, var.x - 4, var.y - 4, var.x + 4, var.y + 4);
+            }
+        }
+        SelectObject(hdcBuffer, hPenBlack);
 
         RECT SaveButton = { 0 + 1, 0 + 1, 100 - 1, 20 - 1 };
-        Rectangle(hdc, SaveButton.left - 1, SaveButton.top - 1, SaveButton.right + 1, SaveButton.bottom + 1);
-        FillRect(hdc, &SaveButton, hBrushGrey);
+        Rectangle(hdcBuffer, SaveButton.left - 1, SaveButton.top - 1, SaveButton.right + 1, SaveButton.bottom + 1);
+        FillRect(hdcBuffer, &SaveButton, hBrushGrey);
 
         RECT changeToEntity = { 0 + 1, 20 + 1, 100 - 1, 40 - 1 };
-        Rectangle(hdc, changeToEntity.left - 1, changeToEntity.top - 1, changeToEntity.right + 1, changeToEntity.bottom + 1);
-        FillRect(hdc, &changeToEntity, hBrushGrey);
+        Rectangle(hdcBuffer, changeToEntity.left - 1, changeToEntity.top - 1, changeToEntity.right + 1, changeToEntity.bottom + 1);
+        FillRect(hdcBuffer, &changeToEntity, hBrushGrey);
 
         RECT changeToWall = { 0 + 1, 40 + 1, 100 - 1, 60 - 1 };
-        Rectangle(hdc, changeToWall.left - 1, changeToWall.top - 1, changeToWall.right + 1, changeToWall.bottom + 1);
-        FillRect(hdc, &changeToWall, hBrushGrey);
+        Rectangle(hdcBuffer, changeToWall.left - 1, changeToWall.top - 1, changeToWall.right + 1, changeToWall.bottom + 1);
+        FillRect(hdcBuffer, &changeToWall, hBrushGrey);
 
-        SetBkMode(hdc, TRANSPARENT);
+        SetBkMode(hdcBuffer, TRANSPARENT);
 
-        
-        SetTextColor(hdc, RGB(255, 0, 0));
+
+        SetTextColor(hdcBuffer, RGB(255, 0, 0));
         if (wallSelected) {
-            DrawText(hdc, L"Place Wall", -1, &changeToWall, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
-            SetTextColor(hdc, RGB(0, 0, 0));
-            DrawText(hdc, L"Place Entity", -1, &changeToEntity, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
-            DrawText(hdc, L"Save World", -1, &SaveButton, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            DrawText(hdcBuffer, L"Place Wall", -1, &changeToWall, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            SetTextColor(hdcBuffer, RGB(0, 0, 0));
+            DrawText(hdcBuffer, L"Place Entity", -1, &changeToEntity, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            DrawText(hdcBuffer, L"Save World", -1, &SaveButton, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
         }
         else {
-            DrawText(hdc, L"Place Entity", -1, &changeToEntity, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
-            SetTextColor(hdc, RGB(0, 0, 0));
-            DrawText(hdc, L"Place Wall", -1, &changeToWall, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
-            DrawText(hdc, L"Save World", -1, &SaveButton, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            DrawText(hdcBuffer, L"Place Entity", -1, &changeToEntity, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            SetTextColor(hdcBuffer, RGB(0, 0, 0));
+            DrawText(hdcBuffer, L"Place Wall", -1, &changeToWall, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+            DrawText(hdcBuffer, L"Save World", -1, &SaveButton, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
         }
-
+        BitBlt(hdc, 0, 0, 960, 540, hdcBuffer, 0, 0, SRCCOPY);
 
         DeleteObject(hPenRed);
         DeleteObject(hPenBlack);
         DeleteObject(hBrushGrey);
+        DeleteDC(hdc);
+        DeleteDC(hdcBuffer);
         EndPaint(hWnd, &ps);
     }
     break;
@@ -219,22 +344,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         POINT pt;
         GetCursorPos(&pt);
         ScreenToClient(hWnd, &pt);
-        cout << pt.x << " - " << pt.y << endl;
-        if (pt.x > 100 || pt.y > 60) {
-            pointList.push_back(pt);
-        }
-        else {
+        
+        if (pt.x < 100 && pt.y < 60) {
             SetCursor(LoadCursor(NULL, IDC_HAND));
             if (pt.y > 0 && pt.y < 20) {
-                cout << "SaveWorld" << endl;
+                saveWorld();
             }
             if (pt.y > 20 && pt.y < 40) {
-                cout << "Entity" << endl;
                 wallSelected = false;
             }
             if (pt.y > 40 && pt.y < 60) {
-                cout << "Wall" << endl;
                 wallSelected = true;
+            }
+        }
+        else {
+            if (wallSelected) {
+                wallPointList.push_back(pt);
+            }
+            else {
+                entityPointList.push_back(pt);
+                saveObjFile(importFile(), pt);
             }
         }
     }
@@ -259,7 +388,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         std::_Exit(EXIT_SUCCESS);
         break;
 
+    case WM_ERASEBKGND:
+    {
+        return TRUE;
+    }
+
     default:
+
         UpdateWindow(hWnd);
         return DefWindowProcW(hWnd, message, wParam, lParam);
     }
