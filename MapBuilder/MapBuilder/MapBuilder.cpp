@@ -66,7 +66,7 @@ void saveWorld() {
     if (wallPointList.size() % 2 != 0) return;
     string out = entityList;
     for (int i = 0; i < wallPointList.size(); i+=2) {
-        out.append("W{{" + to_string(MathFuns::mapLinear(wallPointList.at(i).x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(wallPointList.at(i).y, 0, 540, 0, 1)) + "}{" + to_string(MathFuns::mapLinear(wallPointList.at(i + 1).x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(wallPointList.at(i + 1).y, 0, 540, 0, 1)) + "}};");
+        out.append("W{{" + to_string(MathFuns::mapLinear(wallPointList.at(i).x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(wallPointList.at(i).y, 0, 540, 0, 1)) + "},{" + to_string(MathFuns::mapLinear(wallPointList.at(i + 1).x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(wallPointList.at(i + 1).y, 0, 540, 0, 1)) + "}};");
     }
 
     OPENFILENAME ofn;
@@ -120,7 +120,7 @@ void saveObjFile(string file, POINT pt) {
         coords.push_back(temp);
     }
     string out = "E{" + to_string(MathFuns::mapLinear(pt.x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(pt.y, 0, 540, 0, 1)) + "}{";
-    for (vector<string> vec : coords) { out.append("{" + vec.at(0) + "," + vec.at(1) + "," + vec.at(2) + "}"); }
+    for (vector<string> vec : coords) { out.append("{" + vec.at(0) + "," + vec.at(1) + "," + vec.at(2) + "},"); }
     out.append("};");
     
     entityList.append(out);
