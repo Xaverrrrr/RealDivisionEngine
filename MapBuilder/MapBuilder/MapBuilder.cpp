@@ -66,7 +66,7 @@ void saveWorld() {
     if (wallPointList.size() % 2 != 0) return;
     string out = entityList;
     for (int i = 0; i < wallPointList.size(); i+=2) {
-        out.append("W{{" + to_string(MathFuns::mapLinear(wallPointList.at(i).x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(wallPointList.at(i).y, 0, 540, 0, 1)) + "}{" + to_string(MathFuns::mapLinear(wallPointList.at(i + 1).x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(wallPointList.at(i + 1).y, 0, 540, 0, 1)) + "}};\n");
+        out.append("W{{" + to_string(MathFuns::mapLinear(wallPointList.at(i).x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(wallPointList.at(i).y, 0, 540, 0, 1)) + "}{" + to_string(MathFuns::mapLinear(wallPointList.at(i + 1).x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(wallPointList.at(i + 1).y, 0, 540, 0, 1)) + "}};");
     }
 
     OPENFILENAME ofn;
@@ -75,7 +75,7 @@ void saveWorld() {
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = NULL;
-    ofn.lpstrFilter = TEXT("Real Division Engine World (*.rdew)\0*.txt\0All Files (*.*)\0*.*\0");
+    ofn.lpstrFilter = TEXT("Real Division Engine World (*.rdew)\0*.rdew\0All Files (*.*)\0*.*\0");
     ofn.lpstrFile = fileName;
     ofn.nMaxFile = MAX_PATH;
     ofn.lpstrTitle = TEXT("Save File");
@@ -121,7 +121,7 @@ void saveObjFile(string file, POINT pt) {
     }
     string out = "E{" + to_string(MathFuns::mapLinear(pt.x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(pt.y, 0, 540, 0, 1)) + "}{";
     for (vector<string> vec : coords) { out.append("{" + vec.at(0) + "," + vec.at(1) + "," + vec.at(2) + "}"); }
-    out.append("};\n");
+    out.append("};");
     
     entityList.append(out);
 }
@@ -165,7 +165,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     LoadStringW(hInstance, IDC_MAPBUILDER, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
-    CreateConsole();
 
     if (!InitInstance(hInstance, nCmdShow))
     {
