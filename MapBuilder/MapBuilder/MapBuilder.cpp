@@ -119,7 +119,7 @@ void saveObjFile(string file, POINT pt) {
         }
         coords.push_back(temp);
     }
-    string out = "E{" + to_string(MathFuns::mapLinear(pt.x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(pt.y, 0, 540, 0, 1)) + "}{";
+    string out = "E{" + to_string(MathFuns::mapLinear(pt.x, 0, 960, 0, 1)) + "," + to_string(MathFuns::mapLinear(pt.y, 0, 540, 0, 1)) + "},{";
     for (vector<string> vec : coords) { out.append("{" + vec.at(0) + "," + vec.at(1) + "," + vec.at(2) + "},"); }
     out.append("};");
     
