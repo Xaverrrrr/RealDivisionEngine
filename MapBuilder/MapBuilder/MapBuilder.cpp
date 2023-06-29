@@ -82,7 +82,10 @@ void saveWorld() {
     ofn.Flags = OFN_OVERWRITEPROMPT;
 
     if (GetSaveFileName(&ofn) == TRUE) {
+
+        lstrcat(fileName, _T(".rdew"));
         std::ofstream file(fileName);
+
 
         if (file.is_open()) {
             file << out;
