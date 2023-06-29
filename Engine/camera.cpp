@@ -135,6 +135,7 @@ vector<vector<Vector2>> Camera::renderEntities(vector<Entity> entities)
     for (Entity var : entities)
     {
         vector<Vector2> temp;
+        bool entityValid = true;
         for (Vector3 point : var.getVerteces()) {
             Point p;
             p.setCoordinates(point);
@@ -142,7 +143,13 @@ vector<vector<Vector2>> Camera::renderEntities(vector<Entity> entities)
             Vector2 coordinatesOnScreen = this->renderPoint(p);
             temp.push_back({ coordinatesOnScreen });
         }
-        output.push_back(temp);
+        for (Vector2 v : temp) {
+            if (v.x != 0 && v.y != 0) entityValid == true;
+            else entityValid == false;
+        }
+        if (entityValid) {
+            output.push_back(temp);
+        }
     }
 
     return output;
