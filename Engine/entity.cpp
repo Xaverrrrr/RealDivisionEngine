@@ -5,10 +5,11 @@ Entity::Entity(string name) {
 	this->name = name;
 }
 
-Entity::Entity(string name, Vector3 position)
+Entity::Entity(string name, Vector3 position, vector<Vector3> verteces)
 {
 	this->name = name;
 	this->setPosition(position);
+	this->verteces = verteces;
 }
 
 void Entity::setPosition(Vector3 myPosition) {
@@ -48,12 +49,13 @@ string Entity::getName()
 	return this->name;
 }
 
-void Entity::setDimensions(Vector3 dimensions)
+void Entity::setVerteces(vector<Vector3> v)
 {
-	this->dimensions = dimensions;
+	this->verteces = v;
 }
 
-Vector3 Entity::getDimensions()
+vector<Vector3> Entity::getVerteces()
 {
-	return this->dimensions;
+	return this->verteces;
 }
+

@@ -53,7 +53,7 @@ bool World::importFile()
 	ofn.hwndOwner = NULL;
 	ofn.lpstrFile = szFile;
 	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFilter = NULL;
+	ofn.lpstrFilter = TEXT("Real Division Engine World (*.rdew)\0*.rdew\0All Files (*.*)\0*.*\0");
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
@@ -71,30 +71,79 @@ bool World::importFile()
 			string fileContent = oss.str();
 			file.close();
 
-			vector<string> splitText = splitString(fileContent, ';');
-			for (string s : splitText) {
-				vector<string> attributes = splitString(s, '/');
-				if (attributes.at(0) == "W") // Wall
-				{
-					vector<vector<string>> coords;
-					coords.push_back(splitString(attributes.at(1), ','));
-					coords.push_back(splitString(attributes.at(2), ','));
-					coords.push_back(splitString(attributes.at(3), ','));
-					coords.push_back(splitString(attributes.at(4), ','));
+			vector<string> lines;
 
-					addWall(Wall(
+			string token;
+			stringstream ss(fileContent);
+
+			while (std::getline(ss, token, ';')) {
+				lines.push_back(token);
+			}
+			for (string s : lines)
+			{
+				if(s[0] == 'W') 
+				{
+					string temp;
+					for (char c : s) {
+						if (isdigit(c) || c == ',' || c == '.' || c == '-') {
+							temp.push_back(c);
+						}
+					}
+
+					string token;
+					stringstream ss(temp);
+					vector<double> out;
+
+					while (std::getline(ss, token, ',')) {
+						out.push_back(stod(token));
+					}
+
+					this->addWall(Wall(
 						"Wall",
 						{
-							Point(stod(coords.at(0).at(0)), stod(coords.at(0).at(1)), stod(coords.at(0).at(2))),
-							Point(stod(coords.at(1).at(0)), stod(coords.at(1).at(1)), stod(coords.at(1).at(2))),
-							Point(stod(coords.at(2).at(0)), stod(coords.at(2).at(1)), stod(coords.at(2).at(2))),
-							Point(stod(coords.at(3).at(0)), stod(coords.at(3).at(1)), stod(coords.at(3).at(2)))
+							Point(out[0] * this->screenWidth, out[1] * this->screenHeight, 0),
+							Point(out[2] * this->screenWidth, out[3] * this->screenHeight, 0),
+							Point(out[2] * this->screenWidth, out[3] * this->screenHeight, 10),
+							Point(out[0] * this->screenWidth, out[1] * this->screenHeight, 10),
 						}
 					));
 				}
-				else if (attributes.at(0) == "E") // Entity
+				else if (s[0] == 'E') 
 				{
-					//
+					string temp;
+					int objMultiplier = 10;
+					for (char c : s) {
+						if (isdigit(c) || c == ',' || c == '.' || c == '-') {
+							temp.push_back(c);
+						}
+					}
+					temp.erase(temp.length() - 1);
+
+					string token;
+					stringstream ss(temp);
+					vector<double> out;
+
+					while (std::getline(ss, token, ',')) {
+						out.push_back(stod(token));
+					}
+
+
+					double xpos = out[0] * this->screenWidth;
+					double ypos = out[1] * this->screenHeight;
+
+					vector<Vector3> verteces;
+					for (int i = 2; i < out.size(); i += 3) {
+						verteces.push_back(
+							Vector3(
+								out[i] * objMultiplier + xpos, out[i + 1] * objMultiplier + ypos, out[i + 2] * objMultiplier
+							));
+					}
+					this->addEntity(
+						Entity(
+							"Entity",
+							Vector3(xpos, ypos, 0),
+							verteces
+						));
 				}
 			}
 		}

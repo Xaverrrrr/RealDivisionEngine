@@ -13,7 +13,7 @@ class Entity
 	public:
 
 		Entity(string name);
-		Entity(string name, Vector3 position);
+		Entity(string name, Vector3 position, vector<Vector3> verteces);
 
 		void			setPosition(Vector3 myPosition);
 		Vector3			getPosition();
@@ -25,9 +25,8 @@ class Entity
 		void			setName(string name);
 		string			getName();
 		
-		void			setDimensions(Vector3 dimensions);
-		Vector3			getDimensions();
-		
+		void			setVerteces(vector<Vector3> v);
+		vector<Vector3> getVerteces();
 
 	private:
 
@@ -37,6 +36,7 @@ class Entity
 
 		Vector3 velocity;	//velX, velY, velZ
 
-		Vector3 dimensions; //length, width, height
+		vector<Vector3> verteces;
+
 };
 #endif //!ENTITY_H

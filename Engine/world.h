@@ -38,7 +38,8 @@ class World
 		vector<double> measurements = { 0.0, 0.0, 0.0 };
 		vector<Entity> entityList;
 		vector<Wall> wallList;
-
+		int screenWidth = 960;
+		int screenHeight = 540;
 		std::vector<std::string> splitString(const std::string& input, char delimiter);
 };
 

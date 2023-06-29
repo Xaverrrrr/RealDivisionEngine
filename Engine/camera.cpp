@@ -55,7 +55,7 @@ Vector2 Camera::renderPoint(Point point) {
     double aspectRatio = width / height;
     double fov = this->getFov();
     double f = 1 / tan(MathFuns::degToRad(fov / 2));
-    double angleXY = MathFuns::radToDeg(atan((pointPosition.y - cameraPosition.y) / (pointPosition.x - cameraPosition.x)));
+    double angleXY = MathFuns::radToDeg(atan2(pointPosition.y - cameraPosition.y, pointPosition.x - cameraPosition.x));
 
     // Apply camera rotation
     Vector3 cameraRotation = this->getRotation(); // Assuming getRotation() returns Euler rotations in degrees
@@ -80,7 +80,7 @@ Vector2 Camera::renderPoint(Point point) {
     positionDelta.y = rotatedObjectPosition.z - cameraPosition.z;
     positionDelta.z = rotatedObjectPosition.x - cameraPosition.x;
 
-    if (positionDelta.length() < far && angleXY > -fov && angleXY < fov) {
+    if (positionDelta.length() < far && positionDelta.length() > near && angleXY > -fov && angleXY < fov) {
         Matrix4x4 perspectiveProjectionMatrix;
 
         perspectiveProjectionMatrix.M[0][0] = f / aspectRatio;
@@ -101,7 +101,6 @@ Vector2 Camera::renderPoint(Point point) {
 
         return output;
     }
-    return Vector2(NULL, NULL);
 }
 
 
@@ -111,12 +110,40 @@ vector<vector<Vector2>> Camera::renderWalls(vector<Wall> walls) {
 
 	for (Wall var : walls)
 	{
-		Vector2 coordinatesOnScreen;
+        vector<Vector2> temp;
+        double wallValid = true;
 		for (Point point : var.getCoordinates()) {
-			coordinatesOnScreen = this->renderPoint(point);
-			output.push_back({ coordinatesOnScreen });
+            Vector2 coordinatesOnScreen = this->renderPoint(point);
+			temp.push_back({ coordinatesOnScreen });
 		}
+        for (Vector2 v : temp) {
+            if (v.x != 0 && v.y != 0) wallValid == true;
+            else wallValid == false;
+        }
+        if (wallValid) {
+            output.push_back(temp);
+        }
 	}
 
 	return output;
+}
+
+vector<vector<Vector2>> Camera::renderEntities(vector<Entity> entities)
+{
+    vector<vector<Vector2>> output;
+
+    for (Entity var : entities)
+    {
+        vector<Vector2> temp;
+        for (Vector3 point : var.getVerteces()) {
+            Point p;
+            p.setCoordinates(point);
+
+            Vector2 coordinatesOnScreen = this->renderPoint(p);
+            temp.push_back({ coordinatesOnScreen });
+        }
+        output.push_back(temp);
+    }
+
+    return output;
 }

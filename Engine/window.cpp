@@ -34,8 +34,9 @@ int height = 540;
 Camera player =  Camera("PlayerCam1");
 World world =  World("World");
 
-Point point = Point(10, 5, 10);
-Point point2 = Point(10, -5, 10);
+vector<vector<Vector2>> wallPoints;
+vector<vector<Vector2>> entityPoints;
+
 
 
 void initEntities() {
@@ -140,7 +141,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         /***********************
         *RENDERING HAPPENS HERE*
         ************************/
-        player.updatePosition();               //Add velocity onto position
+        player.updatePosition();                //Add velocity onto position
+        wallPoints = player.renderWalls(world.getWalls());
+        entityPoints = player.renderEntities(world.getEntities());
         Sleep(2);                               //Delay makes animation smoother
         InvalidateRect(msg.hwnd, NULL, TRUE);   //Send msg to clear 
     }
@@ -221,17 +224,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     Ellipse(hdcBuffer, width / 2 - 2, height / 2 - 2, width / 2 + 2, height / 2 + 2);
                         
                     SelectObject(hdcBuffer, hPen);
-
-                        auto walls = player.renderWalls(
-                            { 
-                                Wall("testwall", {Point(0,0,0), Point(0,5,0), Point(5,5,0), Point(5,0,0)}),
-                                Wall("testwall1", {Point(0,0,5), Point(0,5,5), Point(5,5,5), Point(5,0,5)}),
-                            });
-                            for(vector<Vector2> wall : walls) {
-                                for (Vector2 vec : wall) {
-                                    Ellipse(hdcBuffer, vec.x - 2, vec.y - 2, vec.x + 2, vec.y + 2);
-                                }
+                    
+                    for (vector<Vector2> w : wallPoints) {
+                        for (int i = 0; i < w.size(); i++) {
+                            for (int j = i + 1; j < w.size(); j++) {
+                                MoveToEx(hdcBuffer, w[i].x, w[i].y, 0);
+                                LineTo(hdcBuffer, w[j].x, w[j].y);
                             }
+                        }
+                    }
+                    for (vector<Vector2> e : entityPoints) {
+                        for (int i = 0; i < e.size(); i++) {
+                            for (int j = i + 1; j < e.size(); j++) {
+                                MoveToEx(hdcBuffer, e[i].x, e[i].y, 0);
+                                LineTo(hdcBuffer, e[j].x, e[j].y);
+                            }
+                        }
+                    }
 
                         DeleteObject(hPen);
                         BitBlt(hdc, 0, 0, 960, 540, hdcBuffer, 0, 0, SRCCOPY);

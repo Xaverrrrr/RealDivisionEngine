@@ -25,7 +25,8 @@ public:
 	void updateRotation(double x, double y, double z);
 
 	Vector2 renderPoint(Point point);
-	vector<vector<Vector2>> renderWalls(vector<Wall> walls); //Returns a list of pairs (left and right side of wall) which themselfes contain a pair of both the x coordinate on the screen and the height of the line 
+	vector<vector<Vector2>> renderWalls(vector<Wall> walls); 
+	vector<vector<Vector2>> renderEntities(vector<Entity> entities);
 	void setRenderDistance(int x);
 	int getRenderDistance();
 
